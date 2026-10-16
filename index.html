@@ -1,0 +1,2580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Imbue Property Track - Hotel Operations Portal</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        imbue: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            700: '#0f766e',
+                            800: '#115e59',
+                            900: '#134e4a',
+                        },
+                        brandDark: '#0f172a'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .live-pulse { animation: pulse-ring 2s infinite; }
+        @keyframes pulse-ring {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        .alert-flash { animation: flash-red 1.5s infinite; }
+        @keyframes flash-red {
+            0%, 100% { background-color: rgba(225, 29, 72, 0.95); }
+            50% { background-color: rgba(159, 18, 57, 0.95); }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col antialiased selection:bg-imbue-500 selection:text-white">
+
+    <header class="bg-slate-900 text-white sticky top-0 z-30 shadow-lg border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16 gap-2">
+                <div class="flex items-center space-x-2 sm:space-x-3 shrink-0">
+                    <div class="bg-gradient-to-tr from-imbue-600 to-teal-400 p-2 sm:p-2.5 rounded-2xl shadow-md flex items-center justify-center">
+                        <i class="fa-solid fa-broom text-white text-base sm:text-lg"></i>
+                    </div>
+                    <div>
+                        <span class="font-black text-sm sm:text-lg tracking-tight block leading-none text-white">Imbue <span class="text-imbue-500">Property Track</span></span>
+                        <span id="txt-header-sub" class="text-[9px] sm:text-[10px] text-slate-400 font-semibold tracking-wider uppercase">Hotel Operations Portal</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-1.5 sm:space-x-3">
+                    <button id="btn-sound-toggle" onclick="window.app && window.app.toggleAudioAlerts()" class="flex items-center space-x-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm">
+                        <i id="icon-sound-toggle" class="fa-solid fa-volume-high text-emerald-400"></i>
+                        <span id="txt-sound-toggle" class="hidden md:inline text-[11px]">Sound ON</span>
+                    </button>
+
+                    <div class="flex items-center bg-slate-800 border border-slate-700 rounded-xl px-2 py-1">
+                        <i class="fa-solid fa-globe text-imbue-400 text-xs mr-1.5"></i>
+                        <select id="header-lang-select" onchange="window.app && window.app.changeLanguage(this.value)" class="bg-transparent text-xs font-bold text-slate-100 focus:outline-none cursor-pointer">
+                            <option value="en" class="bg-slate-900 text-white">EN (English)</option>
+                            <option value="es" class="bg-slate-900 text-white">ES (Español)</option>
+                            <option value="fr" class="bg-slate-900 text-white">FR (Français)</option>
+                            <option value="tl" class="bg-slate-900 text-white">TL (Tagalog)</option>
+                        </select>
+                    </div>
+
+                    <div id="header-hotel-container" class="flex items-center bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-1.5">
+                        <i class="fa-solid fa-hotel text-imbue-400 text-xs mr-2"></i>
+                        <select id="header-hotel-select" onchange="window.app && window.app.switchProperty(this.value)" class="bg-transparent text-xs sm:text-sm font-bold text-slate-100 focus:outline-none cursor-pointer max-w-[120px] md:max-w-[180px] truncate">
+                        </select>
+                    </div>
+
+                    <div id="header-user-status"></div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <nav class="bg-white border-b border-slate-200 sticky top-16 z-20 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex space-x-2 sm:space-x-8 overflow-x-auto py-1" id="nav-tabs-container">
+                <button id="nav-tab-hk" onclick="window.app && window.app.switchTab('hk')" class="border-imbue-600 text-imbue-700 whitespace-nowrap py-3 px-2 border-b-2 font-bold text-xs sm:text-sm flex items-center space-x-1.5">
+                    <i class="fa-solid fa-soap"></i>
+                    <span>Housekeeper Workspace</span>
+                </button>
+                <button id="nav-tab-hoh" onclick="window.app && window.app.switchTab('hoh')" class="border-transparent text-slate-500 hover:text-slate-700 whitespace-nowrap py-3 px-2 border-b-2 font-bold text-xs sm:text-sm flex items-center space-x-1.5">
+                    <i class="fa-solid fa-clipboard-check text-teal-600"></i>
+                    <span>Head of House</span>
+                    <span id="badge-hoh-pending-count" class="bg-amber-100 text-amber-800 text-[10px] font-black px-2 py-0.5 rounded-full hidden">0 Pending</span>
+                </button>
+                <button id="nav-tab-fd" onclick="window.app && window.app.switchTab('fd')" class="border-transparent text-slate-500 hover:text-slate-700 whitespace-nowrap py-3 px-2 border-b-2 font-bold text-xs sm:text-sm flex items-center space-x-1.5">
+                    <i class="fa-solid fa-concierge-bell text-blue-600"></i>
+                    <span>Front Desk</span>
+                    <span id="badge-fd-vacant-count" class="bg-emerald-100 text-emerald-800 text-[10px] font-black px-2 py-0.5 rounded-full hidden">0 New Ready</span>
+                </button>
+                <button id="nav-tab-maint" onclick="window.app && window.app.switchTab('maint')" class="border-transparent text-slate-500 hover:text-slate-700 whitespace-nowrap py-3 px-2 border-b-2 font-bold text-xs sm:text-sm flex items-center space-x-1.5">
+                    <i class="fa-solid fa-screwdriver-wrench text-amber-600"></i>
+                    <span>Maintenance</span>
+                    <span id="badge-maint-active-count" class="bg-rose-100 text-rose-800 text-[10px] font-black px-2 py-0.5 rounded-full hidden">0 Open</span>
+                </button>
+                <button id="nav-tab-manager" onclick="window.app && window.app.switchTab('manager')" class="border-transparent text-slate-500 hover:text-slate-700 whitespace-nowrap py-3 px-2 border-b-2 font-bold text-xs sm:text-sm flex items-center space-x-1.5">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>General Manager Dashboard</span>
+                    <span id="badge-active-hk-count" class="bg-emerald-100 text-emerald-800 text-[10px] font-black px-2 py-0.5 rounded-full hidden">0 Active</span>
+                </button>
+                <button id="nav-tab-upper" onclick="window.app && window.app.switchTab('upper')" class="border-transparent text-slate-500 hover:text-slate-700 whitespace-nowrap py-3 px-2 border-b-2 font-bold text-xs sm:text-sm flex items-center space-x-1.5 hidden">
+                    <i class="fa-solid fa-crown text-amber-500"></i>
+                    <span>Above Property Management</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main id="app-main-content" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-6 hidden">
+
+        <!-- GLOBAL CALL MAINTENANCE & QUICK DISPATCH BAR -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 flex flex-wrap items-center justify-between gap-3 text-white">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-screwdriver-wrench text-amber-400"></i>
+                <span class="text-xs font-bold">Quick Department Alert Center</span>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+                <button onclick="window.app && window.app.promptCallMaintenance()" class="bg-amber-600 hover:bg-amber-500 text-white font-black text-xs px-3 py-1.5 rounded-xl flex items-center space-x-1 shadow-md">
+                    <i class="fa-solid fa-phone"></i>
+                    <span>CALL MAINTENANCE</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- CROSS-DEPARTMENT CHAT PORTAL -->
+        <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-extrabold text-slate-900 text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-comments text-imbue-600"></i>
+                    <span>Cross-Department Real-Time Chat & Requests</span>
+                </h3>
+                <span class="text-[11px] font-bold text-slate-400">Resets Daily at Midnight (Central Time)</span>
+            </div>
+
+            <div id="chat-messages-container" class="bg-slate-900 text-slate-100 rounded-2xl p-4 max-h-48 overflow-y-auto space-y-2 font-mono text-xs">
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                <input type="text" id="chat-input-msg" placeholder="Type message to all departments..." class="sm:col-span-10 p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-imbue-500 font-medium">
+                <button onclick="window.app && window.app.sendChatMessage()" class="sm:col-span-2 bg-imbue-600 hover:bg-imbue-700 text-white font-black text-xs py-3 rounded-xl shadow-md transition-all flex items-center justify-center space-x-1.5 uppercase tracking-wider">
+                    <i class="fa-solid fa-paper-plane"></i>
+                    <span>SEND</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- VIEW 1: HOUSEKEEPER WORKSPACE -->
+        <section id="view-hk" class="space-y-6">
+            <div id="hk-fd-alerts-container" class="space-y-3"></div>
+            <div id="hk-hoh-direct-alerts" class="space-y-3"></div>
+            <div id="hk-callback-container" class="space-y-3"></div>
+
+            <div class="bg-slate-900 text-white p-4 rounded-3xl border border-slate-800 shadow-md flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-2xl bg-rose-500/20 border border-rose-500/40 text-rose-400 flex items-center justify-center">
+                        <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-sm text-white">Need Quick Assistance?</h3>
+                        <p class="text-xs text-slate-400">Send a real-time alert to the General Manager on duty.</p>
+                    </div>
+                </div>
+                <button onclick="window.app && window.app.triggerAssistanceAlert()" class="w-full sm:w-auto bg-rose-600 hover:bg-rose-500 active:scale-95 text-white font-black text-xs uppercase tracking-wider px-5 py-3 rounded-2xl shadow-lg transition-all flex items-center justify-center space-x-2 border border-rose-400">
+                    <i class="fa-solid fa-bell text-sm animate-bounce"></i>
+                    <span>REQUEST ASSISTANCE / ALERT MANAGER</span>
+                </button>
+            </div>
+
+            <div id="active-room-banner" class="hidden bg-gradient-to-r from-emerald-700 via-teal-800 to-slate-900 text-white p-5 sm:p-6 rounded-3xl shadow-xl border-2 border-emerald-400 live-pulse">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="space-y-1">
+                        <div class="flex items-center space-x-2">
+                            <span class="bg-emerald-400 text-slate-900 font-extrabold text-[10px] uppercase tracking-widest px-2.5 py-0.5 rounded-full">
+                                <i class="fa-solid fa-circle-play mr-1 animate-ping"></i> <span>Currently Inside Room</span>
+                            </span>
+                            <span id="banner-stay-type" class="bg-white/20 text-white font-bold text-xs px-2.5 py-0.5 rounded-full">Check Out</span>
+                        </div>
+                        <h2 class="text-3xl font-black tracking-tight"><span>Room</span> <span id="banner-room-num">000</span></h2>
+                        <p class="text-xs text-slate-300"><span>Started at</span> <span id="banner-start-time" class="font-semibold text-white">00:00 AM</span></p>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row items-center gap-4">
+                        <div class="bg-slate-900/80 px-6 py-3 rounded-2xl border border-white/10 text-center w-full sm:w-auto">
+                            <span class="text-[10px] uppercase tracking-wider text-slate-400 font-bold block">Elapsed Time</span>
+                            <span id="banner-timer-display" class="font-mono text-3xl font-black text-amber-300">00:00:00</span>
+                        </div>
+
+                        <button onclick="window.app && window.app.exitRoom()" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-black text-base px-8 py-4 rounded-2xl shadow-xl transition-all flex items-center justify-center space-x-3 border-2 border-indigo-300">
+                            <i class="fa-solid fa-right-from-bracket text-lg"></i>
+                            <span>EXIT ROOM / COMPLETE</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-md space-y-6">
+                <div class="border-b border-slate-100 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                        <h2 class="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                            <i class="fa-solid fa-door-open text-imbue-600"></i>
+                            <span>Start Cleaning / Log Room</span>
+                        </h2>
+                        <p class="text-xs text-slate-500">Enter room number and select service type.</p>
+                    </div>
+                    <div id="hk-signed-in-indicator" class="text-xs font-bold text-slate-600 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200 w-fit">
+                        <span>Signed in as:</span> <span id="hk-display-name" class="text-imbue-700">None</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
+                    <div class="lg:col-span-4 space-y-2">
+                        <label class="block text-xs font-extrabold text-slate-600 uppercase tracking-wider">
+                            <span>Room Number</span> <span class="text-rose-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <i class="fa-solid fa-hashtag absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg"></i>
+                            <input type="text" id="input-room-num" placeholder="e.g. 104 or 312" class="w-full pl-11 pr-4 py-3.5 bg-slate-50 border-2 border-slate-200 rounded-2xl text-xl font-black text-slate-900 focus:outline-none focus:border-imbue-500 focus:bg-white transition-all uppercase placeholder:font-normal placeholder:text-sm">
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-5 space-y-2">
+                        <label class="block text-xs font-extrabold text-slate-600 uppercase tracking-wider">
+                            Service Type
+                        </label>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 p-1 bg-slate-100 rounded-2xl border border-slate-200">
+                            <label class="cursor-pointer">
+                                <input type="radio" name="service_type" value="Check Out" checked class="peer sr-only">
+                                <div class="py-2.5 px-1 text-center text-[11px] font-black rounded-xl text-slate-600 peer-checked:bg-purple-600 peer-checked:text-white peer-checked:shadow-md transition-all flex items-center justify-center space-x-1">
+                                    <i class="fa-solid fa-suitcase"></i>
+                                    <span>Check Out</span>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="service_type" value="Stay Over" class="peer sr-only">
+                                <div class="py-2.5 px-1 text-center text-[11px] font-black rounded-xl text-slate-600 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:shadow-md transition-all flex items-center justify-center space-x-1">
+                                    <i class="fa-solid fa-bed"></i>
+                                    <span>Stay Over</span>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="service_type" value="No Service" class="peer sr-only">
+                                <div class="py-2.5 px-1 text-center text-[11px] font-black rounded-xl text-slate-600 peer-checked:bg-amber-600 peer-checked:text-white peer-checked:shadow-md transition-all flex items-center justify-center space-x-1">
+                                    <i class="fa-solid fa-ban"></i>
+                                    <span>No Service</span>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="service_type" value="Do Not Disturb" class="peer sr-only">
+                                <div class="py-2.5 px-1 text-center text-[11px] font-black rounded-xl text-slate-600 peer-checked:bg-rose-600 peer-checked:text-white peer-checked:shadow-md transition-all flex items-center justify-center space-x-1">
+                                    <i class="fa-solid fa-bell-slash"></i>
+                                    <span>DND</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-3">
+                        <button onclick="window.app && window.app.enterRoom()" class="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-base py-3.5 px-6 rounded-2xl shadow-lg transition-all flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-right-to-bracket text-lg"></i>
+                            <span>ENTER ROOM</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="pt-2 border-t border-slate-100">
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                        Optional Maintenance Note (Notifies Maintenance, HOH, & GM)
+                    </label>
+                    <input type="text" id="input-room-note" placeholder="e.g., HVAC leaking, broken lamp..." class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-imbue-500">
+                </div>
+            </div>
+
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-md overflow-hidden space-y-4">
+                <div class="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h3 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-clipboard-check text-imbue-600"></i>
+                            <span>Rooms Cleaned Today</span>
+                            <span id="hk-today-count" class="bg-imbue-100 text-imbue-800 text-xs font-black px-2.5 py-0.5 rounded-full">0 Rooms</span>
+                        </h3>
+                        <p class="text-xs text-slate-500"><span>Live duration records for your current shift at</span> <span id="hk-hotel-name-sub" class="font-bold text-slate-700">Selected Hotel</span></p>
+                    </div>
+
+                    <button onclick="window.app && window.app.openEndOfDayModal()" class="bg-gradient-to-r from-purple-700 to-indigo-800 hover:from-purple-800 hover:to-indigo-900 active:scale-95 text-white font-black text-xs sm:text-sm px-6 py-3 rounded-2xl shadow-lg transition-all flex items-center space-x-2">
+                        <i class="fa-solid fa-paper-plane text-amber-300"></i>
+                        <span>END OF DAY (SUBMIT SHIFT REPORT)</span>
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs sm:text-sm text-slate-600">
+                        <thead class="bg-slate-50 text-[11px] text-slate-400 uppercase tracking-wider border-b border-slate-200">
+                            <tr>
+                                <th class="px-6 py-3.5 font-black">Room #</th>
+                                <th class="px-6 py-3.5 font-black">Type</th>
+                                <th class="px-6 py-3.5 font-black">Entered At</th>
+                                <th class="px-6 py-3.5 font-black">Exited At</th>
+                                <th class="px-6 py-3.5 font-black">Time Spent</th>
+                                <th class="px-6 py-3.5 font-black">Inspection Status / Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="hk-logged-rooms-tbody" class="divide-y divide-slate-100">
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="hk-empty-logs-msg" class="p-8 text-center text-xs text-slate-400 space-y-1">
+                    <i class="fa-solid fa-bed text-2xl text-slate-300 mb-1"></i>
+                    <p class="font-bold text-slate-600">No rooms cleaned yet today.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 2: HEAD OF HOUSE WORKSPACE -->
+        <section id="view-hoh" class="hidden space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+                <div>
+                    <h2 class="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                        <i class="fa-solid fa-clipboard-check text-teal-600"></i>
+                        <span>Head of House Inspection Portal</span>
+                    </h2>
+                    <p class="text-xs text-slate-500">Inspect completed room submissions, record notes, and notify Front Desk.</p>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button onclick="window.app && window.app.triggerAssistanceAlert('hoh')" class="bg-rose-600 hover:bg-rose-500 text-white font-black text-xs px-3.5 py-2.5 rounded-xl shadow-sm transition-all flex items-center space-x-1">
+                        <i class="fa-solid fa-bell"></i>
+                        <span>ALERT MANAGER</span>
+                    </button>
+                    <div class="text-xs font-bold bg-teal-50 border border-teal-200 text-teal-800 px-4 py-2.5 rounded-xl">
+                        <span>Pending Inspection Queue:</span> <span id="hoh-pending-badge-counter" class="font-black">0 Rooms</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HOH TARGETED NOTIFICATION MODULE -->
+            <div class="bg-teal-900 text-white p-5 rounded-3xl shadow-md space-y-3">
+                <h3 class="text-xs font-black uppercase tracking-wider text-teal-300 flex items-center gap-2">
+                    <i class="fa-solid fa-paper-plane"></i> Send Direct Targeted Dispatch Notification
+                </h3>
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                    <select id="hoh-dispatch-target" class="sm:col-span-3 bg-slate-800 border border-teal-700 text-xs font-bold text-white rounded-xl p-2.5">
+                        <option value="all_hk">All Housekeepers</option>
+                        <option value="maint">Maintenance Dept</option>
+                        <option value="gm">General Manager</option>
+                    </select>
+                    <input type="text" id="hoh-dispatch-msg" placeholder="Type notification instructions..." class="sm:col-span-7 bg-slate-800 border border-teal-700 text-xs font-medium text-white rounded-xl p-2.5">
+                    <button onclick="window.app && window.app.sendHohTargetedNotification()" class="sm:col-span-2 bg-teal-500 hover:bg-teal-400 text-slate-900 font-black text-xs rounded-xl p-2.5">
+                        SEND ALERT
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 space-y-4">
+                <h3 class="font-extrabold text-slate-900 text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-hourglass-half text-amber-500"></i>
+                    <span>Rooms Awaiting Head of House Inspection</span>
+                </h3>
+
+                <div id="hoh-inspection-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                </div>
+
+                <div id="hoh-inspection-empty" class="p-8 text-center text-xs text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200 space-y-1">
+                    <i class="fa-solid fa-circle-check text-2xl text-emerald-400 mb-1 block"></i>
+                    <p class="font-bold text-slate-700">All completed rooms have been inspected!</p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden space-y-3">
+                <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+                    <h3 class="font-extrabold text-slate-900 text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-clock-rotate-left text-imbue-600"></i>
+                        <span>Today's Inspected Rooms Log</span>
+                    </h3>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs sm:text-sm text-slate-600">
+                        <thead class="bg-slate-50 text-[11px] text-slate-400 uppercase tracking-wider border-b border-slate-200">
+                            <tr>
+                                <th class="px-6 py-3 font-extrabold">Room #</th>
+                                <th class="px-6 py-3 font-extrabold">Housekeeper</th>
+                                <th class="px-6 py-3 font-extrabold">Type</th>
+                                <th class="px-6 py-3 font-extrabold">Inspector (HOH)</th>
+                                <th class="px-6 py-3 font-extrabold">Head of House Decision</th>
+                                <th class="px-6 py-3 font-extrabold">Inspection Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="hoh-history-tbody" class="divide-y divide-slate-100">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 3: FRONT DESK WORKSPACE -->
+        <section id="view-fd" class="hidden space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+                <div>
+                    <h2 class="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                        <i class="fa-solid fa-concierge-bell text-blue-600"></i>
+                        <span>Front Desk Guest Operations</span>
+                    </h2>
+                    <p class="text-xs text-slate-500">Live feed of Inspected / Vacant Clean rooms ready for check-in and cross-department dispatch.</p>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white p-6 rounded-3xl border border-blue-800 shadow-lg space-y-4">
+                <div class="flex items-center justify-between border-b border-blue-800/80 pb-3">
+                    <h3 class="font-black text-sm flex items-center gap-2 text-white">
+                        <i class="fa-solid fa-bullhorn text-amber-400 text-base"></i>
+                        <span>Alert Staff (Housekeeping, Maintenance, Head of House, & General Manager)</span>
+                    </h3>
+                    <span class="text-[10px] font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30 px-2.5 py-0.5 rounded-full uppercase">Priority Dispatch</span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+                    <div class="sm:col-span-3 space-y-1">
+                        <label class="block text-[11px] font-black text-slate-300 uppercase tracking-wider">Room # / Location</label>
+                        <input type="text" id="fd-broadcast-room" placeholder="e.g. Room 204 or 410" class="w-full p-2.5 bg-slate-800/90 border border-slate-700 rounded-xl text-xs font-bold text-white focus:outline-none focus:ring-2 focus:ring-amber-400 placeholder:text-slate-500 uppercase">
+                    </div>
+
+                    <div class="sm:col-span-3 space-y-1">
+                        <label class="block text-[11px] font-black text-slate-300 uppercase tracking-wider">Change Category</label>
+                        <select id="fd-broadcast-category" class="w-full p-2.5 bg-slate-800/90 border border-slate-700 rounded-xl text-xs font-bold text-white focus:outline-none focus:ring-2 focus:ring-amber-400">
+                            <option value="Guest Staying Over">Guest Staying Over (Stay Over Extended)</option>
+                            <option value="Late Check-Out">Late Check-Out Approved</option>
+                            <option value="Room Move / Swap">Room Move / Swap</option>
+                            <option value="Priority Early Check-In">Early Check-In Rush</option>
+                            <option value="Guest Maintenance Request">Guest Maintenance Need</option>
+                        </select>
+                    </div>
+
+                    <div class="sm:col-span-4 space-y-1">
+                        <label class="block text-[11px] font-black text-slate-300 uppercase tracking-wider">Specific Details / Staff Instructions</label>
+                        <input type="text" id="fd-broadcast-details" placeholder="e.g. Guest paid for additional night, please service linen..." class="w-full p-2.5 bg-slate-800/90 border border-slate-700 rounded-xl text-xs font-medium text-white focus:outline-none focus:ring-2 focus:ring-amber-400 placeholder:text-slate-500">
+                    </div>
+
+                    <div class="sm:col-span-2">
+                        <button onclick="window.app && window.app.sendFdBroadcastAlert()" class="w-full bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-900 font-black text-xs py-3 px-3 rounded-xl shadow-lg transition-all flex items-center justify-center space-x-1.5 uppercase tracking-wider">
+                            <i class="fa-solid fa-paper-plane"></i>
+                            <span>ALERT STAFF</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="fd-broadcast-feed-container" class="space-y-3"></div>
+
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 space-y-4">
+                <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                    <h3 class="font-extrabold text-slate-900 text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-bell text-emerald-500 animate-bounce"></i>
+                        <span>Inspected / Vacant Clean Room Notifications (Ready for Check-In)</span>
+                    </h3>
+                    <span id="fd-vacant-count-badge" class="bg-emerald-100 text-emerald-800 font-extrabold text-xs px-2.5 py-0.5 rounded-full">0 Ready</span>
+                </div>
+
+                <div id="fd-vacant-rooms-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                </div>
+
+                <div id="fd-vacant-rooms-empty" class="p-8 text-center text-xs text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200 space-y-1">
+                    <i class="fa-solid fa-bed text-2xl text-slate-300 mb-1 block"></i>
+                    <p class="font-bold text-slate-700">No active unconfirmed room notifications currently on the board.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 4: MAINTENANCE WORKSPACE -->
+        <section id="view-maint" class="hidden space-y-6">
+            <div id="maint-fd-alerts-container" class="space-y-3"></div>
+
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+                <div>
+                    <h2 class="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                        <i class="fa-solid fa-screwdriver-wrench text-amber-600"></i>
+                        <span>Maintenance & Engineering Operations</span>
+                    </h2>
+                    <p class="text-xs text-slate-500">Track assigned GM daily tasks and real-time room work order flags.</p>
+                </div>
+                <button onclick="window.app && window.app.triggerAssistanceAlert('maint')" class="bg-rose-600 hover:bg-rose-500 text-white font-black text-xs px-3.5 py-2.5 rounded-xl shadow-sm transition-all flex items-center space-x-1">
+                    <i class="fa-solid fa-bell"></i>
+                    <span>ALERT MANAGER</span>
+                </button>
+            </div>
+
+            <!-- MAINTENANCE CATEGORIES (PREVENTATIVE MAINTENANCE SECTIONS) -->
+            <div class="bg-slate-900 text-white p-6 rounded-3xl space-y-6 shadow-xl border border-slate-800">
+                <div class="border-b border-slate-800 pb-3 flex justify-between items-center">
+                    <div>
+                        <h3 class="text-base font-black text-amber-400 flex items-center gap-2">
+                            <i class="fa-solid fa-layer-group"></i> Maintenance Preventative Categories (Auto-purge after 90 days)
+                        </h3>
+                        <p class="text-xs text-slate-400">Items log with date and persist until completed or removed by GM.</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Category 1: Room PMs -->
+                    <div class="bg-slate-800/90 border border-slate-700 p-4 rounded-2xl space-y-3 flex flex-col justify-between">
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+                                <span class="font-extrabold text-sm text-teal-300">Room PMs</span>
+                                <button onclick="window.app && window.app.addCategoryItem('Room PMs')" class="bg-teal-600 hover:bg-teal-500 text-white text-[10px] font-black px-2.5 py-1 rounded-lg uppercase">+ ADD ITEM</button>
+                            </div>
+                            <div id="cat-list-room-pms" class="space-y-2 max-h-40 overflow-y-auto"></div>
+                        </div>
+                    </div>
+
+                    <!-- Category 2: Carpet Cleaning -->
+                    <div class="bg-slate-800/90 border border-slate-700 p-4 rounded-2xl space-y-3 flex flex-col justify-between">
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+                                <span class="font-extrabold text-sm text-blue-300">Carpet Cleaning</span>
+                                <button onclick="window.app && window.app.addCategoryItem('Carpet Cleaning')" class="bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-black px-2.5 py-1 rounded-lg uppercase">+ ADD ITEM</button>
+                            </div>
+                            <div id="cat-list-carpet-cleaning" class="space-y-2 max-h-40 overflow-y-auto"></div>
+                        </div>
+                    </div>
+
+                    <!-- Category 3: Ice Machine Cleaning -->
+                    <div class="bg-slate-800/90 border border-slate-700 p-4 rounded-2xl space-y-3 flex flex-col justify-between">
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+                                <span class="font-extrabold text-sm text-cyan-300">Ice Machine Cleaning</span>
+                                <button onclick="window.app && window.app.addCategoryItem('Ice Machine Cleaning')" class="bg-cyan-600 hover:bg-cyan-500 text-white text-[10px] font-black px-2.5 py-1 rounded-lg uppercase">+ ADD ITEM</button>
+                            </div>
+                            <div id="cat-list-ice-machine" class="space-y-2 max-h-40 overflow-y-auto"></div>
+                        </div>
+                    </div>
+
+                    <!-- Category 4: AC Cleaning/Filters -->
+                    <div class="bg-slate-800/90 border border-slate-700 p-4 rounded-2xl space-y-3 flex flex-col justify-between">
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+                                <span class="font-extrabold text-sm text-amber-300">AC Cleaning/Filters</span>
+                                <button onclick="window.app && window.app.addCategoryItem('AC Cleaning/Filters')" class="bg-amber-600 hover:bg-amber-500 text-white text-[10px] font-black px-2.5 py-1 rounded-lg uppercase">+ ADD ITEM</button>
+                            </div>
+                            <div id="cat-list-ac-cleaning" class="space-y-2 max-h-40 overflow-y-auto"></div>
+                        </div>
+                    </div>
+
+                    <!-- Category 5: Special Projects -->
+                    <div class="bg-slate-800/90 border border-slate-700 p-4 rounded-2xl space-y-3 flex flex-col justify-between sm:col-span-2 lg:col-span-1">
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+                                <span class="font-extrabold text-sm text-purple-300">Special Projects</span>
+                                <button onclick="window.app && window.app.addCategoryItem('Special Projects')" class="bg-purple-600 hover:bg-purple-500 text-white text-[10px] font-black px-2.5 py-1 rounded-lg uppercase">+ ADD ITEM</button>
+                            </div>
+                            <div id="cat-list-special-projects" class="space-y-2 max-h-40 overflow-y-auto"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+                <h3 class="font-extrabold text-slate-900 text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-plus-circle text-amber-600"></i>
+                    <span>Log New Maintenance Work Order / Task</span>
+                </h3>
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+                    <div class="sm:col-span-3">
+                        <label class="block text-xs font-extrabold text-slate-600 uppercase tracking-wider mb-1">Room # or Location</label>
+                        <input type="text" id="maint-input-location" placeholder="e.g. Room 204 or Pool" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+                    <div class="sm:col-span-6">
+                        <label class="block text-xs font-extrabold text-slate-600 uppercase tracking-wider mb-1">Task Details / Work Description</label>
+                        <input type="text" id="maint-input-desc" placeholder="e.g. Replace bathroom light fixture..." class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+                    <div class="sm:col-span-3">
+                        <button onclick="window.app && window.app.createMaintenanceTask()" class="w-full bg-amber-600 hover:bg-amber-700 active:scale-95 text-white font-black text-xs py-3 px-4 rounded-xl shadow-md transition-all flex items-center justify-center space-x-1.5 uppercase tracking-wider">
+                            <i class="fa-solid fa-wrench"></i>
+                            <span>ADD WORK ORDER</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 space-y-4">
+                <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                    <h3 class="font-extrabold text-slate-900 text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-rose-500"></i>
+                        <span>Open Maintenance Tasks & Room Flags</span>
+                    </h3>
+                    <span id="maint-open-count-badge" class="bg-rose-100 text-rose-800 font-extrabold text-xs px-2.5 py-0.5 rounded-full">0 Open</span>
+                </div>
+
+                <div id="maint-tasks-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                </div>
+
+                <div id="maint-tasks-empty" class="p-8 text-center text-xs text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200 space-y-1">
+                    <i class="fa-solid fa-circle-check text-2xl text-emerald-500 mb-1 block"></i>
+                    <p class="font-bold text-slate-700">No active maintenance work orders!</p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden space-y-3">
+                <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+                    <h3 class="font-extrabold text-slate-900 text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-circle-check text-emerald-600"></i>
+                        <span>Completed Work Orders Log</span>
+                    </h3>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs sm:text-sm text-slate-600">
+                        <thead class="bg-slate-50 text-[11px] text-slate-400 uppercase tracking-wider border-b border-slate-200">
+                            <tr>
+                                <th class="px-6 py-3 font-extrabold">Location / Room</th>
+                                <th class="px-6 py-3 font-extrabold">Task Description</th>
+                                <th class="px-6 py-3 font-extrabold">Logged By</th>
+                                <th class="px-6 py-3 font-extrabold">Completed By</th>
+                                <th class="px-6 py-3 font-extrabold">Completion Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="maint-history-tbody" class="divide-y divide-slate-100">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 5: GENERAL MANAGER DASHBOARD -->
+        <section id="view-manager" class="hidden space-y-6">
+            <div id="manager-alerts-container" class="space-y-3"></div>
+
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+                <div>
+                    <h2 class="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                        <i class="fa-solid fa-chart-pie text-imbue-600"></i>
+                        <span>General Manager Operational Dashboard</span>
+                    </h2>
+                    <p class="text-xs text-slate-500"><span>Live property progress for</span> <span id="manager-hotel-title" class="font-bold text-slate-800">Property</span></p>
+                </div>
+
+                <div class="flex items-center space-x-2">
+                    <button onclick="window.app && window.app.exportCSVReport()" class="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-sm transition-all flex items-center space-x-2">
+                        <i class="fa-solid fa-file-csv text-imbue-400"></i>
+                        <span>Export CSV Log</span>
+                    </button>
+                    <button onclick="window.app && window.app.clearDailyData()" class="bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 font-bold text-xs px-3.5 py-2.5 rounded-xl transition-all">
+                        Reset Property Log
+                    </button>
+                </div>
+            </div>
+
+            <!-- GM LIVE REAL-TIME PROPERTY MONITOR -->
+            <div class="bg-slate-900 text-white p-6 rounded-3xl space-y-4 shadow-xl border border-slate-800">
+                <h3 class="font-extrabold text-sm text-teal-300 flex items-center gap-2">
+                    <i class="fa-solid fa-desktop animate-pulse"></i>
+                    <span>Real-Time Live Property Department Monitor</span>
+                </h3>
+                <div id="gm-realtime-monitor" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                </div>
+            </div>
+
+            <!-- ACTIVE LOGGED IN USERS CONTROL CENTER -->
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <h3 class="font-extrabold text-slate-900 text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-user-check text-emerald-600"></i>
+                        <span>Currently Logged-In Active Users (Property Level)</span>
+                    </h3>
+                </div>
+                <div class="overflow-x-auto border border-slate-200 rounded-2xl">
+                    <table class="w-full text-left text-xs text-slate-600">
+                        <thead class="bg-slate-50 text-[11px] text-slate-400 uppercase tracking-wider border-b border-slate-200">
+                            <tr>
+                                <th class="px-4 py-3 font-extrabold">Employee</th>
+                                <th class="px-4 py-3 font-extrabold">Department</th>
+                                <th class="px-4 py-3 font-extrabold">Status</th>
+                                <th class="px-4 py-3 font-extrabold text-right">Force Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="gm-logged-users-tbody" class="divide-y divide-slate-100">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <span class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block">Total Cleaned</span>
+                    <p id="m-metric-total-cleaned" class="text-3xl font-black text-slate-900 mt-1">0</p>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <span class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block">Currently Active</span>
+                    <p id="m-metric-active-now" class="text-3xl font-black text-emerald-600 mt-1">0</p>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <span class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block">Avg Check Out Time</span>
+                    <p id="m-metric-avg-checkout" class="text-3xl font-black text-purple-600 mt-1">0m</p>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <span class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block">Avg Stay Over Time</span>
+                    <p id="m-metric-avg-stayover" class="text-3xl font-black text-blue-600 mt-1">0m</p>
+                </div>
+            </div>
+
+            <!-- GM EMPLOYEE MANAGEMENT MODULE -->
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <h3 class="font-extrabold text-slate-900 text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-users-gear text-imbue-600"></i>
+                        <span>Employee Access Control Management (Add / Revoke Logins)</span>
+                    </h3>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                    <div class="sm:col-span-3">
+                        <label class="block text-[11px] font-black text-slate-600 uppercase mb-1">Employee Full Name</label>
+                        <input type="text" id="gm-user-name" placeholder="e.g. Maria Garcia" class="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-imbue-500">
+                    </div>
+                    <div class="sm:col-span-3">
+                        <label class="block text-[11px] font-black text-slate-600 uppercase mb-1">Department Role</label>
+                        <select id="gm-user-role" class="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-imbue-500">
+                            <option value="hk">Housekeeper (HK)</option>
+                            <option value="hoh">Head of House (HOH)</option>
+                            <option value="fd">Front Desk Agent (FD)</option>
+                            <option value="maint">Maintenance Technician</option>
+                        </select>
+                    </div>
+                    <div class="sm:col-span-3">
+                        <label class="block text-[11px] font-black text-slate-600 uppercase mb-1">Assigned Login PIN</label>
+                        <input type="password" id="gm-user-pin" placeholder="••••" class="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-imbue-500">
+                    </div>
+                    <div class="sm:col-span-3">
+                        <button onclick="window.app && window.app.addEmployeeUser()" class="w-full bg-imbue-600 hover:bg-imbue-700 text-white font-black text-xs py-2.5 rounded-xl shadow-md transition-all flex items-center justify-center space-x-1 uppercase">
+                            <i class="fa-solid fa-user-plus"></i>
+                            <span>ADD EMPLOYEE</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto border border-slate-200 rounded-2xl">
+                    <table class="w-full text-left text-xs text-slate-600">
+                        <thead class="bg-slate-50 text-[11px] text-slate-400 uppercase tracking-wider border-b border-slate-200">
+                            <tr>
+                                <th class="px-4 py-3 font-extrabold">Employee Name</th>
+                                <th class="px-4 py-3 font-extrabold">Role</th>
+                                <th class="px-4 py-3 font-extrabold">Assigned PIN</th>
+                                <th class="px-4 py-3 font-extrabold">Date Added</th>
+                                <th class="px-4 py-3 font-extrabold text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="gm-users-tbody" class="divide-y divide-slate-100">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 space-y-4">
+                <h3 class="font-extrabold text-slate-900 text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-list-check text-amber-600"></i>
+                    <span>Assign Daily Tasks to Maintenance Department</span>
+                </h3>
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+                    <div class="sm:col-span-3">
+                        <label class="block text-xs font-extrabold text-slate-600 uppercase tracking-wider mb-1">Location / Target Room</label>
+                        <input type="text" id="gm-maint-location" placeholder="e.g. Lobby, Room 102" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+                    <div class="sm:col-span-6">
+                        <label class="block text-xs font-extrabold text-slate-600 uppercase tracking-wider mb-1">GM Daily Task Instructions</label>
+                        <input type="text" id="gm-maint-desc" placeholder="e.g. Inspect exterior lighting..." class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+                    <div class="sm:col-span-3">
+                        <button onclick="window.app && window.app.assignGmMaintenanceTask()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-black text-xs py-3 px-4 rounded-xl shadow-md transition-all flex items-center justify-center space-x-1.5 uppercase tracking-wider">
+                            <i class="fa-solid fa-paper-plane text-amber-400"></i>
+                            <span>ASSIGN TO MAINTENANCE</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 space-y-4">
+                <h3 class="font-extrabold text-slate-900 text-sm flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
+                    <span>Live Active Housekeepers Right Now</span>
+                </h3>
+
+                <div id="manager-active-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                </div>
+
+                <div id="manager-active-empty" class="p-6 text-center text-xs text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                    No housekeepers are currently inside a room timing a clean.
+                </div>
+            </div>
+
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden space-y-3">
+                <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+                    <h3 class="font-extrabold text-slate-900 text-sm">Housekeeper Performance & Shift Reports</h3>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs sm:text-sm text-slate-600">
+                        <thead class="bg-slate-50 text-[11px] text-slate-400 uppercase tracking-wider border-b border-slate-200">
+                            <tr>
+                                <th class="px-6 py-3 font-extrabold">Housekeeper</th>
+                                <th class="px-6 py-3 font-extrabold">Rooms Cleaned</th>
+                                <th class="px-6 py-3 font-extrabold">Check Outs</th>
+                                <th class="px-6 py-3 font-extrabold">Stay Overs</th>
+                                <th class="px-6 py-3 font-extrabold">No Service / DND</th>
+                                <th class="px-6 py-3 font-extrabold">Total Time Spent</th>
+                                <th class="px-6 py-3 font-extrabold">End of Day Report</th>
+                            </tr>
+                        </thead>
+                        <tbody id="manager-staff-tbody" class="divide-y divide-slate-100">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden space-y-3">
+                <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+                    <h3 class="font-extrabold text-slate-900 text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-imbue-600"></i>
+                        <span>All Completed Rooms Feed</span>
+                    </h3>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs sm:text-sm text-slate-600">
+                        <thead class="bg-slate-50 text-[11px] text-slate-400 uppercase tracking-wider border-b border-slate-200">
+                            <tr>
+                                <th class="px-6 py-3 font-extrabold">Room #</th>
+                                <th class="px-6 py-3 font-extrabold">Housekeeper</th>
+                                <th class="px-6 py-3 font-extrabold">Type</th>
+                                <th class="px-6 py-3 font-extrabold">Entered</th>
+                                <th class="px-6 py-3 font-extrabold">Exited</th>
+                                <th class="px-6 py-3 font-extrabold">Duration</th>
+                                <th class="px-6 py-3 font-extrabold">Inspection Status & Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="manager-all-rooms-tbody" class="divide-y divide-slate-100">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 6: ABOVE PROPERTY MANAGEMENT OVERVIEW -->
+        <section id="view-upper" class="hidden space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+                <div>
+                    <h2 class="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                        <i class="fa-solid fa-crown text-amber-500"></i>
+                        <span>Above Property Management Portfolio Overview</span>
+                    </h2>
+                </div>
+                <div>
+                    <button onclick="window.app && window.app.exportAllCSVReport()" class="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-sm transition-all flex items-center space-x-2">
+                        <i class="fa-solid fa-file-csv"></i>
+                        <span>Export Portfolio CSV</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ABOVE PROPERTY LIVE PORTFOLIO INSPECTOR -->
+            <div class="bg-slate-900 text-white p-6 rounded-3xl space-y-4 shadow-xl border border-slate-800">
+                <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3 border-b border-slate-800 pb-3">
+                    <h3 class="font-extrabold text-sm text-amber-400 flex items-center gap-2">
+                        <i class="fa-solid fa-eye animate-pulse"></i>
+                        <span>Live Portfolio Real-Time Property Inspector</span>
+                    </h3>
+                    <select id="upper-property-inspector-select" onchange="window.app && window.app.renderUpperLiveInspector()" class="bg-slate-800 border border-slate-700 text-xs font-bold text-white rounded-xl px-3 py-2">
+                    </select>
+                </div>
+                <div id="upper-live-inspector-content" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                </div>
+            </div>
+
+            <!-- ABOVE PROPERTY GM MANAGEMENT MODULE -->
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <h3 class="font-extrabold text-slate-900 text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-user-shield text-amber-500"></i>
+                        <span>General Manager Access Control Management (Add / Revoke GM Logins)</span>
+                    </h3>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                    <div class="sm:col-span-4">
+                        <label class="block text-[11px] font-black text-slate-600 uppercase mb-1">Target Hotel Property</label>
+                        <select id="upper-gm-hotel" class="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        </select>
+                    </div>
+                    <div class="sm:col-span-3">
+                        <label class="block text-[11px] font-black text-slate-600 uppercase mb-1">GM Full Name</label>
+                        <input type="text" id="upper-gm-name" placeholder="e.g. John Doe" class="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+                    <div class="sm:col-span-3">
+                        <label class="block text-[11px] font-black text-slate-600 uppercase mb-1">GM Assigned PIN</label>
+                        <input type="password" id="upper-gm-pin" placeholder="••••" class="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <button onclick="window.app && window.app.addGmUser()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-black text-xs py-2.5 rounded-xl shadow-md transition-all flex items-center justify-center space-x-1 uppercase">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>ADD GM</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto border border-slate-200 rounded-2xl">
+                    <table class="w-full text-left text-xs text-slate-600">
+                        <thead class="bg-slate-50 text-[11px] text-slate-400 uppercase tracking-wider border-b border-slate-200">
+                            <tr>
+                                <th class="px-4 py-3 font-extrabold">Property Hotel</th>
+                                <th class="px-4 py-3 font-extrabold">General Manager</th>
+                                <th class="px-4 py-3 font-extrabold">Assigned PIN</th>
+                                <th class="px-4 py-3 font-extrabold">Date Added</th>
+                                <th class="px-4 py-3 font-extrabold text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="upper-gm-tbody" class="divide-y divide-slate-100">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-slate-900 text-white p-5 rounded-2xl border border-slate-800 shadow-md">
+                    <span class="text-[11px] font-extrabold text-amber-400 uppercase tracking-wider block">Portfolio Cleaned</span>
+                    <p id="upper-metric-total-cleaned" class="text-3xl font-black text-white mt-1">0</p>
+                </div>
+                <div class="bg-slate-900 text-white p-5 rounded-2xl border border-slate-800 shadow-md">
+                    <span class="text-[11px] font-extrabold text-emerald-400 uppercase tracking-wider block">Active Housekeepers</span>
+                    <p id="upper-metric-total-active" class="text-3xl font-black text-emerald-400 mt-1">0</p>
+                </div>
+                <div class="bg-slate-900 text-white p-5 rounded-2xl border border-slate-800 shadow-md">
+                    <span class="text-[11px] font-extrabold text-purple-400 uppercase tracking-wider block">Check Outs</span>
+                    <p id="upper-metric-total-checkouts" class="text-3xl font-black text-purple-300 mt-1">0</p>
+                </div>
+                <div class="bg-slate-900 text-white p-5 rounded-2xl border border-slate-800 shadow-md">
+                    <span class="text-[11px] font-extrabold text-blue-400 uppercase tracking-wider block">Stay Overs</span>
+                    <p id="upper-metric-total-stayovers" class="text-3xl font-black text-blue-300 mt-1">0</p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden space-y-3">
+                <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+                    <h3 class="font-extrabold text-slate-900 text-sm">Property Performance Summary</h3>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs sm:text-sm text-slate-600">
+                        <thead class="bg-slate-50 text-[11px] text-slate-400 uppercase tracking-wider border-b border-slate-200">
+                            <tr>
+                                <th class="px-6 py-3 font-extrabold">Property Name</th>
+                                <th class="px-6 py-3 font-extrabold">Active HKs</th>
+                                <th class="px-6 py-3 font-extrabold">Cleaned Today</th>
+                                <th class="px-6 py-3 font-extrabold">Avg Check Out Time</th>
+                                <th class="px-6 py-3 font-extrabold">Avg Stay Over Time</th>
+                                <th class="px-6 py-3 font-extrabold">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="upper-property-tbody" class="divide-y divide-slate-100">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODAL 1: SIGN IN / ROLE SWITCHING -->
+    <div id="modal-login" class="fixed inset-0 bg-slate-900/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full shadow-2xl border border-slate-100 overflow-hidden transform transition-all">
+            <div class="p-6 text-center bg-slate-900 text-white">
+                <div class="w-12 h-12 bg-imbue-500 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg">
+                    <i class="fa-solid fa-user-lock text-white text-xl"></i>
+                </div>
+                <h3 class="text-lg font-black tracking-tight">Imbue Property Track Sign In</h3>
+                <p class="text-xs text-slate-400 mt-1">Select property, department, enter name and PIN</p>
+            </div>
+
+            <div class="p-6 space-y-4">
+                <div class="grid grid-cols-3 sm:grid-cols-6 gap-1 p-1 bg-slate-100 rounded-xl text-center">
+                    <button type="button" id="role-btn-hk" onclick="window.app && window.app.setLoginRole('hk')" class="py-2 px-0.5 text-[9px] font-black rounded-lg bg-white shadow-sm text-imbue-700 leading-tight">HK</button>
+                    <button type="button" id="role-btn-hoh" onclick="window.app && window.app.setLoginRole('hoh')" class="py-2 px-0.5 text-[9px] font-black rounded-lg text-slate-500 leading-tight">HOH</button>
+                    <button type="button" id="role-btn-fd" onclick="window.app && window.app.setLoginRole('fd')" class="py-2 px-0.5 text-[9px] font-black rounded-lg text-slate-500 leading-tight">Front Desk</button>
+                    <button type="button" id="role-btn-maint" onclick="window.app && window.app.setLoginRole('maint')" class="py-2 px-0.5 text-[9px] font-black rounded-lg text-slate-500 leading-tight">Maint</button>
+                    <button type="button" id="role-btn-mgr" onclick="window.app && window.app.setLoginRole('mgr')" class="py-2 px-0.5 text-[9px] font-black rounded-lg text-slate-500 leading-tight">GM</button>
+                    <button type="button" id="role-btn-upper" onclick="window.app && window.app.setLoginRole('upper')" class="py-2 px-0.5 text-[9px] font-black rounded-lg text-slate-500 leading-tight">Above</button>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1">Select Property</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-hotel absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <select id="login-hotel-select" class="w-full pl-9 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-imbue-500">
+                        </select>
+                    </div>
+                </div>
+
+                <div id="login-hk-fields" class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1">Housekeeper Name</label>
+                        <input type="text" id="login-hk-name" placeholder="e.g. Maria Garcia" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-imbue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1">Login PIN</label>
+                        <input type="password" id="login-hk-pin" placeholder="••••" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-center text-xl font-mono font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-imbue-500">
+                    </div>
+                </div>
+
+                <div id="login-hoh-fields" class="space-y-3 hidden">
+                    <div>
+                        <label class="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1">Head of House Inspector Name</label>
+                        <input type="text" id="login-hoh-name" placeholder="e.g. Inspector Sarah" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1">Head of House PIN</label>
+                        <input type="password" id="login-hoh-pin" placeholder="••••" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-center text-xl font-mono font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-teal-500">
+                    </div>
+                </div>
+
+                <div id="login-fd-fields" class="space-y-3 hidden">
+                    <div>
+                        <label class="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1">Front Desk Agent Name</label>
+                        <input type="text" id="login-fd-name" placeholder="e.g. Alex Johnson" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1">Front Desk PIN</label>
+                        <input type="password" id="login-fd-pin" placeholder="••••" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-center text-xl font-mono font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+
+                <div id="login-maint-fields" class="space-y-3 hidden">
+                    <div>
+                        <label class="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1">Engineer / Technician Name</label>
+                        <input type="text" id="login-maint-name" placeholder="e.g. John Smith" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1">Maintenance PIN</label>
+                        <input type="password" id="login-maint-pin" placeholder="••••" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-center text-xl font-mono font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+                </div>
+
+                <div id="login-mgr-fields" class="space-y-3 hidden">
+                    <div>
+                        <label class="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1">General Manager Name</label>
+                        <input type="text" id="login-mgr-name" placeholder="e.g. GM Robert Miller" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-imbue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1">General Manager Property PIN</label>
+                        <input type="password" id="login-mgr-pin" placeholder="••••" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-center text-xl font-mono font-bold focus:outline-none focus:ring-2 focus:ring-imbue-500">
+                    </div>
+                </div>
+
+                <div id="login-upper-fields" class="space-y-3 hidden">
+                    <div>
+                        <label class="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1">Above Property Admin Name</label>
+                        <input type="text" id="login-upper-name" placeholder="e.g. Executive Director" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1">Above Property Management PIN</label>
+                        <input type="password" id="login-upper-pin" placeholder="••••" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-center text-xl font-mono font-bold focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+                </div>
+
+                <div id="login-error-msg" class="hidden text-xs text-rose-600 font-bold text-center">
+                    Invalid credentials or PIN entered.
+                </div>
+
+                <button type="button" onclick="window.app && window.app.submitLogin()" class="w-full bg-imbue-600 hover:bg-imbue-700 text-white font-black py-3.5 rounded-xl shadow-lg transition-all text-sm uppercase tracking-wider">
+                    SIGN IN TO PORTAL
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: ASSISTANCE ALERT PROMPT -->
+    <div id="modal-assistance" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-sm w-full shadow-2xl border border-slate-100 overflow-hidden transform transition-all">
+            <div class="p-6 text-center bg-rose-600 text-white space-y-2">
+                <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center mx-auto shadow-inner">
+                    <i class="fa-solid fa-bell text-white text-2xl animate-bounce"></i>
+                </div>
+                <h3 class="text-lg font-black tracking-tight">Request GM Assistance</h3>
+                <p class="text-xs text-rose-100">Send an urgent push alert to your property General Manager.</p>
+            </div>
+
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-extrabold text-slate-600 uppercase tracking-wider mb-1">Room Number (Optional)</label>
+                    <input type="text" id="alert-room-num" placeholder="e.g. 204" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-base font-black focus:outline-none focus:ring-2 focus:ring-rose-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-extrabold text-slate-600 uppercase tracking-wider mb-1">Urgent Message / Note</label>
+                    <textarea id="alert-message" rows="3" placeholder="e.g. Need additional linen..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"></textarea>
+                </div>
+
+                <div class="flex space-x-2">
+                    <button onclick="window.app && window.app.closeModal('modal-assistance')" class="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-xl text-xs transition-all">
+                        Cancel
+                    </button>
+                    <button onclick="window.app && window.app.sendAssistanceAlert()" class="w-1/2 bg-rose-600 hover:bg-rose-700 text-white font-black py-3 rounded-xl shadow-lg transition-all text-xs">
+                        SEND ALERT NOW
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 3: END OF DAY HOUSEKEEPER REPORT SUMMARY -->
+    <div id="modal-eod" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-100 overflow-hidden my-6">
+            <div class="px-6 py-5 bg-gradient-to-r from-purple-800 to-indigo-900 text-white flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid fa-paper-plane text-amber-300 text-xl"></i>
+                    <div>
+                        <h3 class="font-black text-base">End of Day Progress Report</h3>
+                        <p class="text-xs text-purple-200"><span id="eod-hk-name">Housekeeper</span> — <span id="eod-property-name">Property</span></p>
+                    </div>
+                </div>
+                <button onclick="window.app && window.app.closeModal('modal-eod')" class="text-white/70 hover:text-white">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+                <div class="grid grid-cols-3 gap-3 text-center">
+                    <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                        <span class="text-[10px] text-slate-400 font-bold uppercase block">Rooms Cleaned</span>
+                        <span id="eod-stat-count" class="text-xl font-black text-slate-800">0</span>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                        <span class="text-[10px] text-slate-400 font-bold uppercase block">Total Work Time</span>
+                        <span id="eod-stat-time" class="text-xl font-black text-purple-600">0m</span>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                        <span class="text-[10px] text-slate-400 font-bold uppercase block">Check Outs</span>
+                        <span id="eod-stat-checkouts" class="text-xl font-black text-indigo-600">0</span>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="text-xs font-black text-slate-700 uppercase tracking-wider mb-2">Cleaned Rooms Log Summary</h4>
+                    <div id="eod-rooms-list" class="divide-y divide-slate-100 bg-slate-50 rounded-2xl p-3 border border-slate-200 space-y-2 max-h-48 overflow-y-auto">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Generated Text Summary for Manager</label>
+                    <textarea id="eod-text-summary" readonly rows="4" class="w-full p-3 bg-slate-900 text-emerald-400 font-mono text-xs rounded-xl focus:outline-none select-all"></textarea>
+                </div>
+            </div>
+
+            <div class="p-6 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row gap-2 justify-end">
+                <button onclick="window.app && window.app.copyEODSummary()" class="bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs px-4 py-3 rounded-xl transition-all flex items-center justify-center space-x-1.5">
+                    <i class="fa-solid fa-copy"></i>
+                    <span>Copy Text Report</span>
+                </button>
+                <button onclick="window.app && window.app.submitEODReport()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs px-6 py-3 rounded-xl shadow-md transition-all flex items-center justify-center space-x-1.5">
+                    <i class="fa-solid fa-paper-plane"></i>
+                    <span>Send Progress to Manager</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBe975C9lO1gUlY1e2CMpPAZDh54Kqk8Ko",
+            authDomain: "imbue-clean-track.firebaseapp.com",
+            projectId: "imbue-clean-track",
+            storageBucket: "imbue-clean-track.firebasestorage.app",
+            messagingSenderId: "808400886357",
+            appId: "1:808400886357:web:04b4693f48021a37f312dc"
+        };
+
+        let db = null;
+        try {
+            if (typeof firebase !== "undefined") {
+                firebase.initializeApp(firebaseConfig);
+                db = firebase.firestore();
+            }
+        } catch (e) {
+            console.warn("Firebase running in offline fallback mode:", e);
+        }
+
+        const PRELOADED_HOTELS = [
+            "Hampton Dalhart",
+            "Hampton Port Lavaca",
+            "Fairfield Missouri City",
+            "Element Vintage Park",
+            "La Quinta Willowbrook",
+            "La Quinta Kingwood",
+            "La Quinta Dalhart",
+            "Days Inn Dalhart",
+            "Super 8 Woodlands"
+        ];
+
+        const MASTER_PIN = "IMBUE";
+
+        class ImbuePropertyTrack {
+            constructor() {
+                this.hotels = PRELOADED_HOTELS;
+                
+                // READ PROPERTY DIRECTLY FROM SHAREABLE LINK QUERY PARAMS (?hotel=Fairfield%20Missouri%20City)
+                const urlParams = new URLSearchParams(window.location.search);
+                const urlHotel = urlParams.get('hotel');
+
+                if (urlHotel && this.hotels.includes(urlHotel)) {
+                    this.selectedHotel = urlHotel;
+                    localStorage.setItem('ipt_selected_hotel', urlHotel);
+                } else {
+                    this.selectedHotel = localStorage.getItem('ipt_selected_hotel') || this.hotels[0];
+                }
+
+                this.role = localStorage.getItem('ipt_current_role') || null; 
+                this.housekeeperName = localStorage.getItem('ipt_hk_name') || '';
+                this.currentLang = localStorage.getItem('ipt_lang') || 'en';
+                this.soundEnabled = localStorage.getItem('ipt_sound_enabled') !== 'false';
+                this.loginRoleSelection = 'hk';
+
+                this.activeTimers = {}; 
+                this.roomLogs = []; 
+                this.eodReports = [];
+                this.assistanceAlerts = [];
+                this.maintenanceTasks = [];
+                this.chatMessages = [];
+                this.fdBroadcastAlerts = [];
+                this.hohDirectAlerts = [];
+                this.categoryItems = [];
+                this.activeUserSessions = [];
+
+                this.appUsers = JSON.parse(localStorage.getItem('ipt_app_users') || '[]');
+
+                this.timerInterval = null;
+
+                if (db) {
+                    this.initFirebaseListeners();
+                }
+                this.init();
+            }
+
+            initFirebaseListeners() {
+                db.collection("clean_track").doc("active_timers").onSnapshot(snapshot => {
+                    this.activeTimers = snapshot.exists ? snapshot.data() : {};
+                    this.renderAllViews();
+                }, e => console.log(e));
+
+                db.collection("clean_track").doc("room_logs").onSnapshot(snapshot => {
+                    this.roomLogs = snapshot.exists ? (snapshot.data().logs || []) : [];
+                    this.renderAllViews();
+                }, e => console.log(e));
+
+                db.collection("clean_track").doc("app_users").onSnapshot(snapshot => {
+                    if (snapshot.exists && snapshot.data().users) {
+                        this.appUsers = snapshot.data().users;
+                        localStorage.setItem('ipt_app_users', JSON.stringify(this.appUsers));
+                    }
+                    this.renderGmUsersTable();
+                    this.renderUpperGmsTable();
+                }, e => console.log(e));
+
+                db.collection("clean_track").doc("maintenance_tasks").onSnapshot(snapshot => {
+                    this.maintenanceTasks = snapshot.exists ? (snapshot.data().tasks || []) : [];
+                    this.updateMaintenanceDashboard();
+                }, e => console.log(e));
+
+                db.collection("clean_track").doc("assistance_alerts").onSnapshot(snapshot => {
+                    const newAlerts = snapshot.exists ? (snapshot.data().alerts || []) : [];
+                    if (newAlerts.length > this.assistanceAlerts.length) {
+                        this.playSoftBeep();
+                    }
+                    this.assistanceAlerts = newAlerts;
+                    this.renderManagerAlerts();
+                }, e => console.log(e));
+
+                db.collection("clean_track").doc("chat_messages").onSnapshot(snapshot => {
+                    this.chatMessages = snapshot.exists ? (snapshot.data().messages || []) : [];
+                    this.checkAndResetChatMidnightCT();
+                    this.renderChatMessages();
+                }, e => console.log(e));
+
+                db.collection("clean_track").doc("fd_broadcast_alerts").onSnapshot(snapshot => {
+                    this.fdBroadcastAlerts = snapshot.exists ? (snapshot.data().broadcasts || []) : [];
+                    this.renderFdBroadcastAlerts();
+                }, e => console.log(e));
+
+                db.collection("clean_track").doc("hoh_direct_alerts").onSnapshot(snapshot => {
+                    this.hohDirectAlerts = snapshot.exists ? (snapshot.data().alerts || []) : [];
+                    this.renderHohDirectAlerts();
+                }, e => console.log(e));
+
+                db.collection("clean_track").doc("category_items").onSnapshot(snapshot => {
+                    this.categoryItems = snapshot.exists ? (snapshot.data().items || []) : [];
+                    this.purge90DaysCategoryItems();
+                    this.renderCategoryItems();
+                }, e => console.log(e));
+
+                db.collection("clean_track").doc("active_user_sessions").onSnapshot(snapshot => {
+                    this.activeUserSessions = snapshot.exists ? (snapshot.data().sessions || []) : [];
+                    this.verifySelfSessionActive();
+                    this.renderLoggedUsersTable();
+                }, e => console.log(e));
+            }
+
+            async syncToFirestore() {
+                localStorage.setItem('ipt_app_users', JSON.stringify(this.appUsers));
+                if (!db) return;
+                try {
+                    await db.collection("clean_track").doc("app_users").set({ users: this.appUsers });
+                    await db.collection("clean_track").doc("room_logs").set({ logs: this.roomLogs });
+                    await db.collection("clean_track").doc("active_timers").set(this.activeTimers);
+                    await db.collection("clean_track").doc("maintenance_tasks").set({ tasks: this.maintenanceTasks });
+                    await db.collection("clean_track").doc("assistance_alerts").set({ alerts: this.assistanceAlerts });
+                    await db.collection("clean_track").doc("chat_messages").set({ messages: this.chatMessages });
+                    await db.collection("clean_track").doc("fd_broadcast_alerts").set({ broadcasts: this.fdBroadcastAlerts });
+                    await db.collection("clean_track").doc("hoh_direct_alerts").set({ alerts: this.hohDirectAlerts });
+                    await db.collection("clean_track").doc("category_items").set({ items: this.categoryItems });
+                    await db.collection("clean_track").doc("active_user_sessions").set({ sessions: this.activeUserSessions });
+                } catch (e) {
+                    console.log("Firestore offline sync active");
+                }
+            }
+
+            init() {
+                this.renderHotelDropdowns();
+                this.startLiveTimerLoop();
+                this.updateSoundToggleUI();
+
+                if (!this.role || !this.housekeeperName) {
+                    document.getElementById('app-main-content')?.classList.add('hidden');
+                    this.openLoginModal('hk');
+                } else {
+                    document.getElementById('app-main-content')?.classList.remove('hidden');
+                    this.updateHeaderUserStatus();
+                    this.enforceRoleNavigation();
+                    this.registerActiveSession();
+                }
+            }
+
+            registerActiveSession() {
+                if (!this.housekeeperName || !this.role) return;
+                this.activeUserSessions = this.activeUserSessions.filter(s => !(s.hotel === this.selectedHotel && s.name === this.housekeeperName));
+                this.activeUserSessions.push({
+                    id: 'sess_' + Date.now(),
+                    hotel: this.selectedHotel,
+                    name: this.housekeeperName,
+                    role: this.role,
+                    loginTime: Date.now()
+                });
+                this.syncToFirestore();
+            }
+
+            verifySelfSessionActive() {
+                if (!this.role || !this.housekeeperName || this.role === 'upper') return;
+                const match = this.activeUserSessions.find(s => s.hotel === this.selectedHotel && s.name === this.housekeeperName);
+                if (!match) {
+                    this.signOutSilently();
+                }
+            }
+
+            signOutSilently() {
+                localStorage.removeItem('ipt_current_role');
+                localStorage.removeItem('ipt_hk_name');
+                this.role = null;
+                this.housekeeperName = '';
+                document.getElementById('app-main-content')?.classList.add('hidden');
+                this.openLoginModal('hk');
+                this.showToast("You have been logged out by the General Manager.", "warning");
+            }
+
+            renderAllViews() {
+                this.renderHousekeeperLogTable();
+                this.renderHousekeeperCallbacks();
+                this.updateHohInspectionQueue();
+                this.updateFrontDeskDashboard();
+                this.updateMaintenanceDashboard();
+                this.updateManagerDashboard();
+                this.updateUpperDashboard();
+                this.renderCategoryItems();
+                this.renderGmRealtimeMonitor();
+                this.renderUpperLiveInspector();
+            }
+
+            checkAndResetChatMidnightCT() {
+                const now = new Date();
+                const ctString = now.toLocaleString("en-US", {timeZone: "America/Chicago"});
+                const ctDate = new Date(ctString);
+                
+                const lastReset = localStorage.getItem('ipt_last_chat_reset');
+                const todayKey = `${ctDate.getFullYear()}-${ctDate.getMonth()}-${ctDate.getDate()}`;
+
+                if (lastReset !== todayKey) {
+                    if (ctDate.getHours() === 0 && ctDate.getMinutes() < 5) {
+                        this.chatMessages = [];
+                        localStorage.setItem('ipt_last_chat_reset', todayKey);
+                        this.syncToFirestore();
+                    }
+                }
+            }
+
+            purge90DaysCategoryItems() {
+                const ninetyDaysMs = 90 * 24 * 60 * 60 * 1000;
+                const now = Date.now();
+                const initialLen = this.categoryItems.length;
+                this.categoryItems = this.categoryItems.filter(item => (now - item.timestamp) < ninetyDaysMs);
+                if (this.categoryItems.length !== initialLen) {
+                    this.syncToFirestore();
+                }
+            }
+
+            enforceRoleNavigation() {
+                const navContainer = document.getElementById('nav-tabs-container');
+                if (!navContainer) return;
+
+                const tabMapping = {
+                    'hk': 'nav-tab-hk',
+                    'hoh': 'nav-tab-hoh',
+                    'fd': 'nav-tab-fd',
+                    'maint': 'nav-tab-maint',
+                    'mgr': 'nav-tab-manager',
+                    'upper': 'nav-tab-upper'
+                };
+
+                const allowedTabId = tabMapping[this.role] || 'nav-tab-hk';
+
+                Object.values(tabMapping).forEach(tabId => {
+                    const tabBtn = document.getElementById(tabId);
+                    if (tabBtn) {
+                        if (tabId === allowedTabId || (this.role === 'upper' && tabId === 'nav-tab-manager')) {
+                            tabBtn.classList.remove('hidden');
+                        } else {
+                            tabBtn.classList.add('hidden');
+                        }
+                    }
+                });
+
+                const targetTab = this.role === 'mgr' ? 'manager' : this.role;
+                this.switchTab(targetTab);
+            }
+
+            addEmployeeUser() {
+                const name = (document.getElementById('gm-user-name')?.value || '').trim();
+                const role = document.getElementById('gm-user-role')?.value || 'hk';
+                const pin = (document.getElementById('gm-user-pin')?.value || '').trim().toUpperCase();
+
+                if (!name || !pin) {
+                    this.showToast("Please enter employee name and PIN!", "warning");
+                    return;
+                }
+
+                const newUser = {
+                    id: 'usr_' + Date.now(),
+                    hotel: this.selectedHotel,
+                    name: name,
+                    role: role,
+                    pin: pin,
+                    createdAt: new Date().toLocaleDateString()
+                };
+
+                this.appUsers.unshift(newUser);
+                if (document.getElementById('gm-user-name')) document.getElementById('gm-user-name').value = '';
+                if (document.getElementById('gm-user-pin')) document.getElementById('gm-user-pin').value = '';
+
+                this.saveState();
+                this.renderGmUsersTable();
+                this.showToast(`Added login access for ${name} (${role.toUpperCase()})`, "success");
+            }
+
+            deleteUser(userId) {
+                if (confirm("Are you sure you want to terminate/delete this access? They will be permanently removed from the system.")) {
+                    this.appUsers = this.appUsers.filter(u => u.id !== userId);
+                    this.saveState();
+                    this.renderGmUsersTable();
+                    this.renderUpperGmsTable();
+                    this.showToast("User access deleted successfully.", "info");
+                }
+            }
+
+            renderGmUsersTable() {
+                const tbody = document.getElementById('gm-users-tbody');
+                if (!tbody) return;
+
+                const propertyUsers = this.appUsers.filter(u => u.hotel === this.selectedHotel && u.role !== 'mgr' && u.role !== 'upper');
+
+                if (propertyUsers.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-xs text-slate-400">No active employee logins created yet for this property.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = propertyUsers.map(u => `
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-4 py-3 font-bold text-slate-900">${u.name}</td>
+                        <td class="px-4 py-3 uppercase font-black text-imbue-700">${u.role}</td>
+                        <td class="px-4 py-3 font-mono text-slate-400">••••</td>
+                        <td class="px-4 py-3 text-slate-400">${u.createdAt}</td>
+                        <td class="px-4 py-3 text-right">
+                            <button onclick="window.app && window.app.deleteUser('${u.id}')" class="bg-rose-50 text-rose-600 hover:bg-rose-100 font-bold px-3 py-1 rounded-lg text-xs transition-all flex items-center gap-1 ml-auto">
+                                <i class="fa-solid fa-user-minus"></i>
+                                <span>Remove Access</span>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            renderLoggedUsersTable() {
+                const tbody = document.getElementById('gm-logged-users-tbody');
+                if (!tbody) return;
+
+                const active = this.activeUserSessions.filter(s => s.hotel === this.selectedHotel && s.role !== 'upper');
+
+                if (active.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-xs text-slate-400">No active property employees currently logged in.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = active.map(s => `
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-4 py-3 font-bold text-slate-900">${s.name}</td>
+                        <td class="px-4 py-3 font-black text-imbue-700 uppercase">${s.role}</td>
+                        <td class="px-4 py-3 text-emerald-600 font-bold"><i class="fa-solid fa-circle text-[8px] mr-1"></i> Active Now</td>
+                        <td class="px-4 py-3 text-right">
+                            <button onclick="window.app && window.app.forceLogoutUser('${s.name}')" class="bg-rose-600 hover:bg-rose-700 text-white font-bold px-3 py-1 rounded-lg text-xs transition-all">
+                                Force Log Out
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            forceLogoutUser(userName) {
+                this.activeUserSessions = this.activeUserSessions.filter(s => !(s.hotel === this.selectedHotel && s.name === userName));
+                this.syncToFirestore();
+                this.showToast(`Logged out ${userName}`, "info");
+            }
+
+            addGmUser() {
+                const targetHotel = document.getElementById('upper-gm-hotel')?.value || this.selectedHotel;
+                const name = (document.getElementById('upper-gm-name')?.value || '').trim();
+                const pin = (document.getElementById('upper-gm-pin')?.value || '').trim().toUpperCase();
+
+                if (!name || !pin) {
+                    this.showToast("Please enter General Manager name and PIN!", "warning");
+                    return;
+                }
+
+                const newGm = {
+                    id: 'usr_' + Date.now(),
+                    hotel: targetHotel,
+                    name: name,
+                    role: 'mgr',
+                    pin: pin,
+                    createdAt: new Date().toLocaleDateString()
+                };
+
+                this.appUsers.unshift(newGm);
+                if (document.getElementById('upper-gm-name')) document.getElementById('upper-gm-name').value = '';
+                if (document.getElementById('upper-gm-pin')) document.getElementById('upper-gm-pin').value = '';
+
+                this.saveState();
+                this.renderUpperGmsTable();
+                this.showToast(`Added GM access for ${targetHotel}`, "success");
+            }
+
+            renderUpperGmsTable() {
+                const tbody = document.getElementById('upper-gm-tbody');
+                if (!tbody) return;
+
+                const gmUsers = this.appUsers.filter(u => u.role === 'mgr');
+
+                if (gmUsers.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-xs text-slate-400">No General Manager logins created yet.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = gmUsers.map(u => `
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-4 py-3 font-black text-slate-900">${u.hotel}</td>
+                        <td class="px-4 py-3 font-bold text-slate-800">${u.name}</td>
+                        <td class="px-4 py-3 font-mono text-slate-400">••••</td>
+                        <td class="px-4 py-3 text-slate-400">${u.createdAt}</td>
+                        <td class="px-4 py-3 text-right">
+                            <button onclick="window.app && window.app.deleteUser('${u.id}')" class="bg-rose-50 text-rose-600 hover:bg-rose-100 font-bold px-3 py-1 rounded-lg text-xs transition-all flex items-center gap-1 ml-auto">
+                                <i class="fa-solid fa-user-minus"></i>
+                                <span>Remove GM</span>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            submitLogin() {
+                const targetHotel = document.getElementById('login-hotel-select')?.value || this.selectedHotel;
+                const errEl = document.getElementById('login-error-msg');
+
+                const checkPin = (enteredPin, role, name) => {
+                    const cleanPin = (enteredPin || '').trim().toUpperCase();
+                    if (cleanPin === MASTER_PIN) return true;
+
+                    return this.appUsers.some(u => 
+                        u.hotel === targetHotel && 
+                        u.role === role && 
+                        u.pin.toUpperCase() === cleanPin &&
+                        (!name || u.name.toLowerCase() === name.toLowerCase())
+                    );
+                };
+
+                const role = this.loginRoleSelection;
+                let name = '';
+                let pin = '';
+
+                if (role === 'hk') {
+                    name = (document.getElementById('login-hk-name')?.value || '').trim();
+                    pin = (document.getElementById('login-hk-pin')?.value || '').trim();
+                } else if (role === 'hoh') {
+                    name = (document.getElementById('login-hoh-name')?.value || '').trim();
+                    pin = (document.getElementById('login-hoh-pin')?.value || '').trim();
+                } else if (role === 'fd') {
+                    name = (document.getElementById('login-fd-name')?.value || '').trim();
+                    pin = (document.getElementById('login-fd-pin')?.value || '').trim();
+                } else if (role === 'maint') {
+                    name = (document.getElementById('login-maint-name')?.value || '').trim();
+                    pin = (document.getElementById('login-maint-pin')?.value || '').trim();
+                } else if (role === 'mgr') {
+                    name = (document.getElementById('login-mgr-name')?.value || '').trim() || 'General Manager';
+                    pin = (document.getElementById('login-mgr-pin')?.value || '').trim();
+                } else if (role === 'upper') {
+                    name = (document.getElementById('login-upper-name')?.value || '').trim() || 'Above Property Admin';
+                    pin = (document.getElementById('login-upper-pin')?.value || '').trim();
+                }
+
+                if (!name) {
+                    this.showToast("Please enter your name", "warning");
+                    return;
+                }
+
+                if (!checkPin(pin, role, name)) {
+                    if (errEl) {
+                        errEl.innerText = "Invalid credentials or PIN.";
+                        errEl.classList.remove('hidden');
+                    }
+                    return;
+                }
+
+                this.role = role;
+                this.selectedHotel = targetHotel;
+                this.housekeeperName = name;
+                this.saveState();
+                this.registerActiveSession();
+                this.updateHeaderUserStatus();
+                this.closeModal('modal-login');
+                document.getElementById('app-main-content')?.classList.remove('hidden');
+                
+                this.enforceRoleNavigation();
+                this.showToast(`Signed in as ${name} at ${targetHotel}`, "success");
+            }
+
+            saveState() {
+                if (this.selectedHotel) localStorage.setItem('ipt_selected_hotel', this.selectedHotel);
+                if (this.role) localStorage.setItem('ipt_current_role', this.role);
+                if (this.housekeeperName) localStorage.setItem('ipt_hk_name', this.housekeeperName);
+                this.syncToFirestore();
+            }
+
+            signOut() {
+                this.activeUserSessions = this.activeUserSessions.filter(s => !(s.hotel === this.selectedHotel && s.name === this.housekeeperName));
+                localStorage.removeItem('ipt_current_role');
+                localStorage.removeItem('ipt_hk_name');
+                this.role = null;
+                this.housekeeperName = '';
+
+                this.syncToFirestore();
+                document.getElementById('app-main-content')?.classList.add('hidden');
+                this.openLoginModal('hk');
+                this.showToast("Signed out successfully.", "info");
+            }
+
+            renderHotelDropdowns() {
+                const optionsHtml = this.hotels.map(h => 
+                    `<option value="${h}" ${h === this.selectedHotel ? 'selected' : ''}>${h}</option>`
+                ).join('');
+
+                if (document.getElementById('header-hotel-select')) document.getElementById('header-hotel-select').innerHTML = optionsHtml;
+                if (document.getElementById('login-hotel-select')) document.getElementById('login-hotel-select').innerHTML = optionsHtml;
+                if (document.getElementById('upper-gm-hotel')) document.getElementById('upper-gm-hotel').innerHTML = optionsHtml;
+                if (document.getElementById('upper-property-inspector-select')) document.getElementById('upper-property-inspector-select').innerHTML = optionsHtml;
+
+                if (document.getElementById('manager-hotel-title')) document.getElementById('manager-hotel-title').innerText = this.selectedHotel;
+                if (document.getElementById('hk-hotel-name-sub')) document.getElementById('hk-hotel-name-sub').innerText = this.selectedHotel;
+            }
+
+            switchProperty(hotelName) {
+                if (this.role !== 'upper') {
+                    this.showToast("Only Above Property admins can switch properties.", "warning");
+                    this.renderHotelDropdowns();
+                    return;
+                }
+                this.selectedHotel = hotelName;
+                this.saveState();
+                this.renderHotelDropdowns();
+                this.renderAllViews();
+                this.showToast(`Switched property to ${hotelName}`, "info");
+            }
+
+            updateHeaderUserStatus() {
+                const container = document.getElementById('header-user-status');
+                if (document.getElementById('hk-display-name')) document.getElementById('hk-display-name').innerText = this.housekeeperName || 'Guest';
+
+                if (!container) return;
+
+                container.innerHTML = `
+                    <div class="flex items-center space-x-2 bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-1.5">
+                        <span class="text-xs font-bold text-slate-200 hidden sm:inline">${this.housekeeperName} (${this.role ? this.role.toUpperCase() : ''})</span>
+                        <button onclick="window.app && window.app.signOut()" class="bg-rose-600 hover:bg-rose-700 text-white font-black text-[10px] px-2 py-1 rounded-lg uppercase transition-all">Sign Out</button>
+                    </div>
+                `;
+            }
+
+            switchTab(tabKey) {
+                const roleTabMap = {
+                    'hk': 'hk',
+                    'hoh': 'hoh',
+                    'fd': 'fd',
+                    'maint': 'maint',
+                    'mgr': 'manager',
+                    'upper': 'upper'
+                };
+
+                if (this.role !== 'upper' && roleTabMap[this.role] !== tabKey) {
+                    this.showToast("Access Denied: You are not authorized for this tab.", "warning");
+                    return;
+                }
+
+                ['hk', 'hoh', 'fd', 'maint', 'manager', 'upper'].forEach(t => {
+                    const view = document.getElementById(`view-${t}`);
+                    const btn = document.getElementById(`nav-tab-${t}`);
+                    if (view) view.classList.add('hidden');
+                    if (btn) btn.className = "border-transparent text-slate-500 hover:text-slate-700 whitespace-nowrap py-3 px-2 border-b-2 font-bold text-xs sm:text-sm flex items-center space-x-1.5";
+                });
+
+                const activeView = document.getElementById(tabKey === 'manager' ? 'view-manager' : `view-${tabKey}`);
+                const activeBtn = document.getElementById(tabKey === 'manager' ? 'nav-tab-manager' : `nav-tab-${tabKey}`);
+
+                if (activeView) activeView.classList.remove('hidden');
+                if (activeBtn) activeBtn.className = "border-imbue-600 text-imbue-700 whitespace-nowrap py-3 px-2 border-b-2 font-bold text-xs sm:text-sm flex items-center space-x-1.5";
+            }
+
+            openLoginModal(defaultRole = 'hk') {
+                this.setLoginRole(defaultRole);
+                document.getElementById('login-error-msg')?.classList.add('hidden');
+                document.getElementById('modal-login')?.classList.remove('hidden');
+            }
+
+            setLoginRole(role) {
+                this.loginRoleSelection = role;
+                ['hk', 'hoh', 'fd', 'maint', 'mgr', 'upper'].forEach(r => {
+                    const btn = document.getElementById(`role-btn-${r}`);
+                    const fields = document.getElementById(`login-${r}-fields`);
+                    if (btn) btn.className = (r === role) ? "py-2 px-0.5 text-[9px] font-black rounded-lg bg-white shadow-sm text-imbue-700 leading-tight" : "py-2 px-0.5 text-[9px] font-black rounded-lg text-slate-500 leading-tight";
+                    if (fields) fields.classList.toggle('hidden', r !== role);
+                });
+            }
+
+            closeModal(id) {
+                document.getElementById(id)?.classList.add('hidden');
+            }
+
+            showToast(msg, type = "info") {
+                const container = document.getElementById('toast-container');
+                if (!container) return;
+
+                const toast = document.createElement('div');
+                toast.className = "bg-slate-900 text-white border border-slate-700 px-4 py-3 rounded-2xl shadow-2xl text-xs font-bold flex items-center space-x-2 transition-all transform pointer-events-auto";
+                toast.innerHTML = `<span>${msg}</span>`;
+
+                container.appendChild(toast);
+                setTimeout(() => toast.remove(), 3000);
+            }
+
+            getActiveKey() {
+                return `${this.selectedHotel}_${this.housekeeperName}`;
+            }
+
+            enterRoom() {
+                const roomNumInput = document.getElementById('input-room-num');
+                const roomNum = roomNumInput ? roomNumInput.value.trim().toUpperCase() : '';
+
+                if (!roomNum) {
+                    this.showToast("Please type in a room number!", "warning");
+                    return;
+                }
+
+                const serviceRadio = document.querySelector('input[name="service_type"]:checked');
+                const serviceType = serviceRadio ? serviceRadio.value : 'Check Out';
+                const noteInput = document.getElementById('input-room-note');
+                const note = noteInput ? noteInput.value.trim() : '';
+
+                if (note) {
+                    this.createMaintenanceTask(`Room ${roomNum}`, note, this.housekeeperName);
+                    this.assistanceAlerts.unshift({
+                        id: 'alert_' + Date.now(),
+                        hotel: this.selectedHotel,
+                        housekeeper: this.housekeeperName,
+                        roomNumber: roomNum,
+                        message: `HK Note: ${note}`,
+                        timestamp: Date.now(),
+                        status: 'active'
+                    });
+                    this.hohDirectAlerts.unshift({
+                        id: 'hoh_da_' + Date.now(),
+                        hotel: this.selectedHotel,
+                        target: 'all_hk',
+                        sender: this.housekeeperName,
+                        message: `Room ${roomNum} HK Maintenance Note: ${note}`,
+                        timestamp: Date.now(),
+                        status: 'active'
+                    });
+                }
+
+                if (serviceType === 'No Service' || serviceType === 'Do Not Disturb') {
+                    const now = Date.now();
+                    const logEntry = {
+                        id: 'log_' + Date.now(),
+                        hotel: this.selectedHotel,
+                        housekeeper: this.housekeeperName,
+                        roomNumber: roomNum,
+                        serviceType: serviceType,
+                        startTime: now,
+                        exitTime: now,
+                        durationSecs: 0,
+                        note: note || `${serviceType} recorded`,
+                        date: new Date().toLocaleDateString(),
+                        inspectionStatus: 'N/A Logged'
+                    };
+
+                    this.roomLogs.unshift(logEntry);
+                    if (roomNumInput) roomNumInput.value = '';
+                    if (noteInput) noteInput.value = '';
+
+                    this.saveState();
+                    this.renderAllViews();
+                    this.playSoftBeep();
+                    this.showToast(`Logged Room ${roomNum} as ${serviceType}.`, "info");
+                    return;
+                }
+
+                const key = this.getActiveKey();
+                if (this.activeTimers[key]) {
+                    this.showToast(`You are already timing Room ${this.activeTimers[key].roomNumber}!`, "warning");
+                    return;
+                }
+
+                this.activeTimers[key] = {
+                    roomNumber: roomNum,
+                    serviceType: serviceType,
+                    note: note,
+                    startTime: Date.now()
+                };
+
+                if (roomNumInput) roomNumInput.value = '';
+                if (noteInput) noteInput.value = '';
+
+                this.saveState();
+                this.playSoftBeep();
+                this.showToast(`Entered Room ${roomNum}. Timer started!`, "success");
+            }
+
+            exitRoom() {
+                const key = this.getActiveKey();
+                const activeData = this.activeTimers[key];
+                if (!activeData) return;
+
+                const exitTime = Date.now();
+                const durationSecs = Math.floor((exitTime - activeData.startTime) / 1000);
+
+                const logEntry = {
+                    id: 'log_' + Date.now(),
+                    hotel: this.selectedHotel,
+                    housekeeper: this.housekeeperName,
+                    roomNumber: activeData.roomNumber,
+                    serviceType: activeData.serviceType,
+                    startTime: activeData.startTime,
+                    exitTime: exitTime,
+                    durationSecs: durationSecs,
+                    note: activeData.note,
+                    date: new Date().toLocaleDateString(),
+                    inspectionStatus: 'Pending Inspection'
+                };
+
+                this.roomLogs.unshift(logEntry);
+                delete this.activeTimers[key];
+
+                this.saveState();
+                this.renderAllViews();
+                this.playSoftBeep();
+                this.showToast(`Exited Room ${logEntry.roomNumber}. Sent to HOH inspection queue!`, "success");
+            }
+
+            startLiveTimerLoop() {
+                if (this.timerInterval) clearInterval(this.timerInterval);
+
+                this.timerInterval = setInterval(() => {
+                    const key = this.getActiveKey();
+                    const active = this.activeTimers[key];
+
+                    const banner = document.getElementById('active-room-banner');
+                    if (active && banner) {
+                        banner.classList.remove('hidden');
+                        if (document.getElementById('banner-room-num')) document.getElementById('banner-room-num').innerText = active.roomNumber;
+                        if (document.getElementById('banner-stay-type')) document.getElementById('banner-stay-type').innerText = active.serviceType;
+                        if (document.getElementById('banner-start-time')) document.getElementById('banner-start-time').innerText = new Date(active.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                        const elapsedSecs = Math.floor((Date.now() - active.startTime) / 1000);
+                        if (document.getElementById('banner-timer-display')) document.getElementById('banner-timer-display').innerText = this.formatHMS(elapsedSecs);
+                    } else if (banner) {
+                        banner.classList.add('hidden');
+                    }
+                }, 1000);
+            }
+
+            formatHMS(secs) {
+                const h = Math.floor(secs / 3600);
+                const m = Math.floor((secs % 3600) / 60);
+                const s = secs % 60;
+                return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            }
+
+            formatTime(ts) {
+                if (!ts) return '--';
+                return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            }
+
+            toggleAudioAlerts() {
+                this.soundEnabled = !this.soundEnabled;
+                localStorage.setItem('ipt_sound_enabled', this.soundEnabled ? 'true' : 'false');
+                this.updateSoundToggleUI();
+                this.showToast(this.soundEnabled ? "Audio alerts turned ON" : "Audio alerts MUTED", "info");
+            }
+
+            updateSoundToggleUI() {
+                const icon = document.getElementById('icon-sound-toggle');
+                const text = document.getElementById('txt-sound-toggle');
+                if (icon) icon.className = this.soundEnabled ? "fa-solid fa-volume-high text-emerald-400" : "fa-solid fa-volume-xmark text-rose-400";
+                if (text) text.innerText = this.soundEnabled ? "Sound ON" : "Sound OFF";
+            }
+
+            playSoftBeep() {
+                if (!this.soundEnabled) return;
+                try {
+                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(1000, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.05, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.12);
+                } catch(e) {}
+            }
+
+            changeLanguage(lang) {
+                this.currentLang = lang;
+                localStorage.setItem('ipt_lang', lang);
+                this.showToast(`Language set to ${lang.toUpperCase()}`, "info");
+            }
+
+            renderHousekeeperLogTable() {
+                const tbody = document.getElementById('hk-logged-rooms-tbody');
+                if (!tbody) return;
+                const myLogs = this.roomLogs.filter(r => r.hotel === this.selectedHotel && r.housekeeper === this.housekeeperName && r.date === new Date().toLocaleDateString());
+                document.getElementById('hk-empty-logs-msg')?.classList.toggle('hidden', myLogs.length > 0);
+                tbody.innerHTML = myLogs.map(l => `
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-6 py-4 font-black text-slate-900">Room ${l.roomNumber}</td>
+                        <td class="px-6 py-4 font-bold text-slate-700">${l.serviceType}</td>
+                        <td class="px-6 py-4 text-slate-500">${this.formatTime(l.startTime)}</td>
+                        <td class="px-6 py-4 text-slate-500">${this.formatTime(l.exitTime)}</td>
+                        <td class="px-6 py-4 font-mono font-bold text-imbue-700">${Math.round(l.durationSecs/60)} mins</td>
+                        <td class="px-6 py-4">${l.inspectionStatus || 'Pending'}</td>
+                    </tr>
+                `).join('');
+            }
+
+            renderHousekeeperCallbacks() {
+                const container = document.getElementById('hk-callback-container');
+                if (!container) return;
+                const myCallbacks = this.roomLogs.filter(r => r.hotel === this.selectedHotel && r.housekeeper === this.housekeeperName && r.isCallback === true && r.date === new Date().toLocaleDateString());
+                container.innerHTML = myCallbacks.map(c => `
+                    <div class="alert-flash text-white p-4 rounded-2xl shadow-lg flex justify-between items-center">
+                        <div>
+                            <strong class="block text-sm font-black">Return to Room ${c.roomNumber}</strong>
+                            <span class="text-xs">Head of House requested reclean: "${c.hohNotes || 'Attention required'}"</span>
+                        </div>
+                        <button onclick="window.app && window.app.acknowledgeCallback('${c.id}')" class="bg-white text-rose-700 font-bold text-xs px-4 py-2 rounded-xl">Acknowledge</button>
+                    </div>
+                `).join('');
+            }
+
+            acknowledgeCallback(id) {
+                const log = this.roomLogs.find(r => r.id === id);
+                if (log) {
+                    log.isCallback = false;
+                    this.saveState();
+                    this.renderHousekeeperCallbacks();
+                }
+            }
+
+            updateHohInspectionQueue() {
+                const grid = document.getElementById('hoh-inspection-grid');
+                if (!grid) return;
+                const pending = this.roomLogs.filter(r => r.hotel === this.selectedHotel && r.date === new Date().toLocaleDateString() && (!r.inspectionStatus || r.inspectionStatus === 'Pending Inspection'));
+                document.getElementById('hoh-inspection-empty')?.classList.toggle('hidden', pending.length > 0);
+                grid.innerHTML = pending.map(r => `
+                    <div class="bg-slate-50 border p-4 rounded-2xl space-y-2">
+                        <div class="flex justify-between font-black text-lg"><span>Room ${r.roomNumber}</span><span class="text-xs text-slate-500">${r.serviceType}</span></div>
+                        <div class="text-xs text-slate-600">Housekeeper: <strong>${r.housekeeper}</strong></div>
+                        <input type="text" id="hoh-note-${r.id}" placeholder="Inspection notes..." class="w-full p-2 text-xs border rounded-lg">
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="window.app && window.app.submitInspectionDecision('${r.id}', 'Inspected / Vacant Clean')" class="bg-emerald-600 text-white font-bold text-xs py-2 rounded-lg">Pass Clean</button>
+                            <button onclick="window.app && window.app.submitInspectionDecision('${r.id}', 'Needs Reclean', true)" class="bg-rose-600 text-white font-bold text-xs py-2 rounded-lg">Reclean</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            submitInspectionDecision(logId, status, isCallback = false) {
+                const note = document.getElementById(`hoh-note-${logId}`)?.value || '';
+                const log = this.roomLogs.find(r => r.id === logId);
+                if (log) {
+                    log.inspectionStatus = status;
+                    log.hohNotes = note;
+                    log.inspectedBy = this.housekeeperName;
+                    log.inspectedAt = Date.now();
+                    log.isCallback = isCallback;
+                    this.saveState();
+                    this.renderAllViews();
+                }
+            }
+
+            sendHohTargetedNotification() {
+                const target = document.getElementById('hoh-dispatch-target')?.value || 'all_hk';
+                const msg = (document.getElementById('hoh-dispatch-msg')?.value || '').trim();
+                if (!msg) return;
+
+                this.hohDirectAlerts.unshift({
+                    id: 'hoh_da_' + Date.now(),
+                    hotel: this.selectedHotel,
+                    target: target,
+                    sender: this.housekeeperName || 'Head of House',
+                    message: msg,
+                    timestamp: Date.now(),
+                    status: 'active'
+                });
+
+                if (target === 'maint') {
+                    this.createMaintenanceTask('HOH Dispatch Notice', msg, 'Head of House');
+                } else if (target === 'gm') {
+                    this.assistanceAlerts.unshift({
+                        id: 'alert_' + Date.now(),
+                        hotel: this.selectedHotel,
+                        housekeeper: 'Head of House',
+                        roomNumber: 'N/A',
+                        message: msg,
+                        timestamp: Date.now(),
+                        status: 'active'
+                    });
+                }
+
+                if (document.getElementById('hoh-dispatch-msg')) document.getElementById('hoh-dispatch-msg').value = '';
+                this.saveState();
+                this.renderHohDirectAlerts();
+                this.showToast("Direct notification dispatched!", "success");
+            }
+
+            renderHohDirectAlerts() {
+                const container = document.getElementById('hk-hoh-direct-alerts');
+                if (!container) return;
+                const active = this.hohDirectAlerts.filter(a => a.hotel === this.selectedHotel && a.status === 'active' && (a.target === 'all_hk' || a.target === this.housekeeperName));
+                container.innerHTML = active.map(a => `
+                    <div class="bg-teal-700 text-white p-3 rounded-2xl flex justify-between items-center text-xs font-bold shadow-md">
+                        <span><i class="fa-solid fa-bullhorn mr-2 text-amber-300"></i>HOH Notice from ${a.sender}: "${a.message}"</span>
+                        <button onclick="window.app && window.app.dismissHohDirectAlert('${a.id}')" class="bg-slate-900 px-3 py-1 rounded-xl text-[10px]">Acknowledge</button>
+                    </div>
+                `).join('');
+            }
+
+            dismissHohDirectAlert(id) {
+                const alert = this.hohDirectAlerts.find(a => a.id === id);
+                if (alert) {
+                    alert.status = 'dismissed';
+                    this.saveState();
+                    this.renderHohDirectAlerts();
+                }
+            }
+
+            updateFrontDeskDashboard() {
+                const grid = document.getElementById('fd-vacant-rooms-grid');
+                if (!grid) return;
+                const ready = this.roomLogs.filter(r => r.hotel === this.selectedHotel && r.inspectionStatus === 'Inspected / Vacant Clean' && !r.fdConfirmed);
+                document.getElementById('fd-vacant-rooms-empty')?.classList.toggle('hidden', ready.length > 0);
+                grid.innerHTML = ready.map(r => `
+                    <div class="bg-emerald-50 border border-emerald-300 p-4 rounded-2xl space-y-2">
+                        <div class="flex justify-between items-center"><h4 class="text-2xl font-black">Room ${r.roomNumber}</h4><span class="text-xs font-bold text-emerald-700">Ready</span></div>
+                        <button onclick="window.app && window.app.confirmFrontDeskRoom('${r.id}')" class="w-full bg-blue-600 text-white font-bold text-xs py-2 rounded-xl">Clear Notification</button>
+                    </div>
+                `).join('');
+            }
+
+            confirmFrontDeskRoom(id) {
+                const log = this.roomLogs.find(r => r.id === id);
+                if (log) {
+                    log.fdConfirmed = true;
+                    this.saveState();
+                    this.updateFrontDeskDashboard();
+                }
+            }
+
+            addCategoryItem(categoryName) {
+                const desc = prompt(`Add action item for category "${categoryName}":`);
+                if (!desc || !desc.trim()) return;
+
+                const newItem = {
+                    id: 'pmi_' + Date.now(),
+                    hotel: this.selectedHotel,
+                    category: categoryName,
+                    description: desc.trim(),
+                    date: new Date().toLocaleDateString(),
+                    timestamp: Date.now(),
+                    completed: false
+                };
+
+                this.categoryItems.unshift(newItem);
+                this.saveState();
+                this.renderCategoryItems();
+                this.showToast(`Item added to ${categoryName}`, "success");
+            }
+
+            toggleCategoryItemComplete(itemId) {
+                const item = this.categoryItems.find(i => i.id === itemId);
+                if (item) {
+                    item.completed = !item.completed;
+                    this.saveState();
+                    this.renderCategoryItems();
+                }
+            }
+
+            removeCategoryItemByGm(itemId) {
+                if (this.role !== 'mgr' && this.role !== 'upper') {
+                    this.showToast("Only General Managers or Above Property can remove category items.", "warning");
+                    return;
+                }
+                this.categoryItems = this.categoryItems.filter(i => i.id !== itemId);
+                this.saveState();
+                this.renderCategoryItems();
+                this.showToast("Item removed by General Manager.", "info");
+            }
+
+            renderCategoryItems() {
+                const catMap = {
+                    'Room PMs': 'cat-list-room-pms',
+                    'Carpet Cleaning': 'cat-list-carpet-cleaning',
+                    'Ice Machine Cleaning': 'cat-list-ice-machine',
+                    'AC Cleaning/Filters': 'cat-list-ac-cleaning',
+                    'Special Projects': 'cat-list-special-projects'
+                };
+
+                Object.keys(catMap).forEach(catName => {
+                    const el = document.getElementById(catMap[catName]);
+                    if (!el) return;
+
+                    const items = this.categoryItems.filter(i => i.hotel === this.selectedHotel && i.category === catName);
+
+                    if (items.length === 0) {
+                        el.innerHTML = `<span class="text-[10px] text-slate-500 italic">No action items logged.</span>`;
+                        return;
+                    }
+
+                    el.innerHTML = items.map(i => `
+                        <div class="bg-slate-900 border border-slate-700 p-2 rounded-xl flex items-center justify-between text-xs">
+                            <div class="space-y-0.5">
+                                <span class="${i.completed ? 'line-through text-slate-500' : 'text-slate-200'} font-bold block">${i.description}</span>
+                                <span class="text-[9px] text-slate-400 font-mono">${i.date}</span>
+                            </div>
+                            <div class="flex items-center space-x-1">
+                                <button onclick="window.app && window.app.toggleCategoryItemComplete('${i.id}')" class="${i.completed ? 'bg-emerald-600 text-white' : 'bg-slate-700 text-slate-300'} text-[9px] font-black px-2 py-1 rounded-lg">
+                                    ${i.completed ? 'DONE' : 'COMPLETE'}
+                                </button>
+                                ${(this.role === 'mgr' || this.role === 'upper') ? `
+                                    <button onclick="window.app && window.app.removeCategoryItemByGm('${i.id}')" class="bg-rose-600 hover:bg-rose-700 text-white text-[9px] font-black px-1.5 py-1 rounded-lg">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `).join('');
+                });
+            }
+
+            createMaintenanceTask(loc, desc, author) {
+                if (!loc || !desc) return;
+                this.maintenanceTasks.unshift({
+                    id: 'maint_' + Date.now(),
+                    hotel: this.selectedHotel,
+                    location: loc,
+                    description: desc,
+                    loggedBy: author || this.housekeeperName,
+                    timestamp: Date.now(),
+                    status: 'open'
+                });
+                this.saveState();
+                this.updateMaintenanceDashboard();
+            }
+
+            promptCallMaintenance() {
+                const msg = prompt("Enter emergency maintenance alert / message:");
+                if (msg && msg.trim()) {
+                    this.createMaintenanceTask(`Direct Alert from ${this.role.toUpperCase()}`, msg.trim(), this.housekeeperName || 'Staff');
+                    this.showToast("Maintenance Department Alerted!", "success");
+                }
+            }
+
+            completeMaintenanceTask(taskId) {
+                const task = this.maintenanceTasks.find(t => t.id === taskId);
+                if (task) {
+                    task.status = 'completed';
+                    task.completedBy = this.housekeeperName || 'Maintenance Staff';
+                    task.completedAt = Date.now();
+                    this.saveState();
+                    this.updateMaintenanceDashboard();
+                    this.showToast("Maintenance task completed & cleared!", "success");
+                }
+            }
+
+            updateMaintenanceDashboard() {
+                const grid = document.getElementById('maint-tasks-grid');
+                const badge = document.getElementById('maint-open-count-badge');
+                const emptyMsg = document.getElementById('maint-tasks-empty');
+
+                const openTasks = this.maintenanceTasks.filter(t => t.hotel === this.selectedHotel && t.status === 'open');
+
+                if (badge) badge.innerText = `${openTasks.length} Open`;
+                if (emptyMsg) emptyMsg.classList.toggle('hidden', openTasks.length > 0);
+
+                if (grid) {
+                    grid.innerHTML = openTasks.map(t => `
+                        <div class="bg-slate-50 border border-slate-200 p-4 rounded-2xl space-y-3 shadow-sm flex flex-col justify-between">
+                            <div class="space-y-1">
+                                <div class="flex justify-between items-start">
+                                    <span class="font-black text-sm text-slate-900">${t.location}</span>
+                                    <span class="text-[10px] font-mono text-slate-400">${this.formatTime(t.timestamp)}</span>
+                                </div>
+                                <p class="text-xs text-slate-600 font-medium">${t.description}</p>
+                                <span class="text-[10px] font-bold text-slate-400 block">Logged by: ${t.loggedBy}</span>
+                            </div>
+                            <button onclick="window.app && window.app.completeMaintenanceTask('${t.id}')" class="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-xs py-2.5 rounded-xl shadow transition-all flex items-center justify-center space-x-1 uppercase">
+                                <i class="fa-solid fa-circle-check"></i>
+                                <span>MARK COMPLETED / CLEAR</span>
+                            </button>
+                        </div>
+                    `).join('');
+                }
+
+                const tbody = document.getElementById('maint-history-tbody');
+                if (!tbody) return;
+                const completed = this.maintenanceTasks.filter(t => t.hotel === this.selectedHotel && t.status === 'completed');
+                tbody.innerHTML = completed.map(t => `
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-6 py-4 font-black text-slate-900">${t.location}</td>
+                        <td class="px-6 py-4 text-xs">${t.description}</td>
+                        <td class="px-6 py-4 text-xs">${t.loggedBy}</td>
+                        <td class="px-6 py-4 text-xs font-bold text-emerald-700">${t.completedBy || 'Staff'}</td>
+                        <td class="px-6 py-4 text-xs font-mono">${this.formatTime(t.completedAt)}</td>
+                    </tr>
+                `).join('');
+            }
+
+            sendChatMessage() {
+                const input = document.getElementById('chat-input-msg');
+                const text = input ? input.value.trim() : '';
+                if (!text) return;
+                this.chatMessages.unshift({
+                    id: 'chat_' + Date.now(),
+                    hotel: this.selectedHotel,
+                    senderName: this.housekeeperName || 'Staff',
+                    senderRole: this.role ? this.role.toUpperCase() : 'DEPT',
+                    text: text,
+                    timestamp: Date.now()
+                });
+                if (input) input.value = '';
+                this.saveState();
+                this.renderChatMessages();
+            }
+
+            renderChatMessages() {
+                const container = document.getElementById('chat-messages-container');
+                if (!container) return;
+                const msgs = this.chatMessages.filter(m => m.hotel === this.selectedHotel);
+                container.innerHTML = msgs.map(m => `
+                    <div class="border-b border-slate-800/80 pb-1 flex justify-between gap-2">
+                        <div>
+                            <span class="text-imbue-400 font-bold">[${m.senderRole}] ${m.senderName}:</span>
+                            <span class="text-slate-200">${m.text}</span>
+                        </div>
+                        <span class="text-[10px] text-slate-500">${this.formatTime(m.timestamp)}</span>
+                    </div>
+                `).join('');
+            }
+
+            sendFdBroadcastAlert() {
+                const room = document.getElementById('fd-broadcast-room')?.value;
+                const cat = document.getElementById('fd-broadcast-category')?.value;
+                const details = document.getElementById('fd-broadcast-details')?.value;
+
+                if (!room) return;
+                const broadcastObj = {
+                    id: 'fdb_' + Date.now(),
+                    hotel: this.selectedHotel,
+                    roomNumber: room,
+                    category: cat,
+                    details: details,
+                    timestamp: Date.now(),
+                    status: 'active'
+                };
+
+                this.fdBroadcastAlerts.unshift(broadcastObj);
+
+                this.assistanceAlerts.unshift({
+                    id: 'alert_' + Date.now(),
+                    hotel: this.selectedHotel,
+                    housekeeper: 'Front Desk Dispatch',
+                    roomNumber: room,
+                    message: `${cat}: ${details}`,
+                    timestamp: Date.now(),
+                    status: 'active'
+                });
+
+                this.hohDirectAlerts.unshift({
+                    id: 'hoh_da_' + Date.now(),
+                    hotel: this.selectedHotel,
+                    target: 'all_hk',
+                    sender: 'Front Desk',
+                    message: `Room ${room} ${cat}: ${details}`,
+                    timestamp: Date.now(),
+                    status: 'active'
+                });
+
+                if (cat.includes('Maintenance')) {
+                    this.createMaintenanceTask(`Room ${room}`, `${cat}: ${details}`, 'Front Desk');
+                }
+
+                if (document.getElementById('fd-broadcast-room')) document.getElementById('fd-broadcast-room').value = '';
+                if (document.getElementById('fd-broadcast-details')) document.getElementById('fd-broadcast-details').value = '';
+
+                this.saveState();
+                this.renderFdBroadcastAlerts();
+                this.playSoftBeep();
+                this.showToast("Broadcasting guest status alert to all department tabs!", "success");
+            }
+
+            renderFdBroadcastAlerts() {
+                const container = document.getElementById('fd-broadcast-feed-container');
+                if (!container) return;
+                const active = this.fdBroadcastAlerts.filter(b => b.hotel === this.selectedHotel && b.status === 'active');
+                container.innerHTML = active.map(b => `
+                    <div class="bg-amber-500 text-white p-3 rounded-xl flex justify-between items-center text-xs font-bold shadow-md">
+                        <span>Room ${b.roomNumber} - ${b.category}: ${b.details}</span>
+                        <button onclick="window.app && window.app.dismissFdBroadcast('${b.id}')" class="bg-slate-900 px-3 py-1 rounded-lg text-white">Dismiss</button>
+                    </div>
+                `).join('');
+            }
+
+            dismissFdBroadcast(id) {
+                const alert = this.fdBroadcastAlerts.find(b => b.id === id);
+                if (alert) {
+                    alert.status = 'dismissed';
+                    this.saveState();
+                    this.renderFdBroadcastAlerts();
+                }
+            }
+
+            triggerAssistanceAlert(originDept = 'hk') {
+                document.getElementById('modal-assistance')?.classList.remove('hidden');
+            }
+
+            sendAssistanceAlert() {
+                const room = document.getElementById('alert-room-num')?.value;
+                const msg = document.getElementById('alert-message')?.value;
+                this.assistanceAlerts.unshift({
+                    id: 'alert_' + Date.now(),
+                    hotel: this.selectedHotel,
+                    housekeeper: this.housekeeperName,
+                    roomNumber: room || 'N/A',
+                    message: msg || 'Assistance requested',
+                    timestamp: Date.now(),
+                    status: 'active'
+                });
+                this.closeModal('modal-assistance');
+                this.playSoftBeep();
+                this.saveState();
+                this.renderManagerAlerts();
+                this.showToast("Manager Alert Dispatched!", "success");
+            }
+
+            renderManagerAlerts() {
+                const container = document.getElementById('manager-alerts-container');
+                if (!container) return;
+                const active = this.assistanceAlerts.filter(a => a.hotel === this.selectedHotel && a.status === 'active');
+                container.innerHTML = active.map(a => `
+                    <div class="bg-rose-600 text-white p-4 rounded-2xl flex justify-between items-center font-bold text-xs shadow-lg">
+                        <span>ALERT: ${a.housekeeper} in Room ${a.roomNumber} - "${a.message}"</span>
+                        <button onclick="window.app && window.app.resolveAlert('${a.id}')" class="bg-white text-rose-700 px-3 py-1 rounded-lg">Acknowledge</button>
+                    </div>
+                `).join('');
+            }
+
+            resolveAlert(id) {
+                const alert = this.assistanceAlerts.find(a => a.id === id);
+                if (alert) {
+                    alert.status = 'resolved';
+                    this.saveState();
+                    this.renderManagerAlerts();
+                }
+            }
+
+            renderGmRealtimeMonitor() {
+                const container = document.getElementById('gm-realtime-monitor');
+                if (!container) return;
+
+                const activeTimersCount = Object.keys(this.activeTimers).filter(k => k.startsWith(this.selectedHotel)).length;
+                const pendingInspec = this.roomLogs.filter(r => r.hotel === this.selectedHotel && r.date === new Date().toLocaleDateString() && (!r.inspectionStatus || r.inspectionStatus === 'Pending Inspection')).length;
+                const openMaint = this.maintenanceTasks.filter(t => t.hotel === this.selectedHotel && t.status === 'open').length;
+                const activeFdBroad = this.fdBroadcastAlerts.filter(b => b.hotel === this.selectedHotel && b.status === 'active').length;
+
+                container.innerHTML = `
+                    <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 space-y-1">
+                        <span class="text-[10px] uppercase font-bold text-slate-400">Housekeeping</span>
+                        <span class="text-2xl font-black text-emerald-400 block">${activeTimersCount} Cleaning Now</span>
+                    </div>
+                    <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 space-y-1">
+                        <span class="text-[10px] uppercase font-bold text-slate-400">Head of House</span>
+                        <span class="text-2xl font-black text-amber-400 block">${pendingInspec} Pending Inspec</span>
+                    </div>
+                    <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 space-y-1">
+                        <span class="text-[10px] uppercase font-bold text-slate-400">Maintenance</span>
+                        <span class="text-2xl font-black text-rose-400 block">${openMaint} Work Orders</span>
+                    </div>
+                    <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 space-y-1">
+                        <span class="text-[10px] uppercase font-bold text-slate-400">Front Desk</span>
+                        <span class="text-2xl font-black text-blue-400 block">${activeFdBroad} Active Alerts</span>
+                    </div>
+                `;
+            }
+
+            renderUpperLiveInspector() {
+                const container = document.getElementById('upper-live-inspector-content');
+                if (!container) return;
+
+                const targetProp = document.getElementById('upper-property-inspector-select')?.value || this.hotels[0];
+
+                const activeTimersCount = Object.keys(this.activeTimers).filter(k => k.startsWith(targetProp)).length;
+                const pendingInspec = this.roomLogs.filter(r => r.hotel === targetProp && r.date === new Date().toLocaleDateString() && (!r.inspectionStatus || r.inspectionStatus === 'Pending Inspection')).length;
+                const openMaint = this.maintenanceTasks.filter(t => t.hotel === targetProp && t.status === 'open').length;
+                const totalCleaned = this.roomLogs.filter(r => r.hotel === targetProp && r.date === new Date().toLocaleDateString()).length;
+
+                container.innerHTML = `
+                    <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 space-y-1">
+                        <span class="text-[10px] uppercase font-bold text-slate-400">Target Hotel</span>
+                        <span class="text-lg font-black text-white truncate block">${targetProp}</span>
+                    </div>
+                    <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 space-y-1">
+                        <span class="text-[10px] uppercase font-bold text-slate-400">Cleaned Today</span>
+                        <span class="text-2xl font-black text-emerald-400 block">${totalCleaned} Rooms</span>
+                    </div>
+                    <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 space-y-1">
+                        <span class="text-[10px] uppercase font-bold text-slate-400">Active HK Timers</span>
+                        <span class="text-2xl font-black text-amber-400 block">${activeTimersCount} Active</span>
+                    </div>
+                    <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 space-y-1">
+                        <span class="text-[10px] uppercase font-bold text-slate-400">Open Maintenance</span>
+                        <span class="text-2xl font-black text-rose-400 block">${openMaint} Tasks</span>
+                    </div>
+                `;
+            }
+
+            updateManagerDashboard() {
+                this.renderGmUsersTable();
+                this.renderLoggedUsersTable();
+                this.renderGmRealtimeMonitor();
+                const propertyLogs = this.roomLogs.filter(r => r.hotel === this.selectedHotel && r.date === new Date().toLocaleDateString());
+                if (document.getElementById('m-metric-total-cleaned')) document.getElementById('m-metric-total-cleaned').innerText = propertyLogs.length;
+            }
+
+            updateUpperDashboard() {
+                this.renderUpperGmsTable();
+                this.renderUpperLiveInspector();
+                if (document.getElementById('upper-metric-total-cleaned')) document.getElementById('upper-metric-total-cleaned').innerText = this.roomLogs.length;
+            }
+
+            exportCSVReport() {
+                const logs = this.roomLogs.filter(r => r.hotel === this.selectedHotel);
+                let csv = "Hotel,Date,Housekeeper,Room Number,Service Type,Duration(Mins)\n";
+                logs.forEach(r => {
+                    csv += `"${r.hotel}","${r.date}","${r.housekeeper}","${r.roomNumber}","${r.serviceType}","${Math.round(r.durationSecs/60)}"\n`;
+                });
+                const link = document.createElement("a");
+                link.href = encodeURI("data:text/csv;charset=utf-8," + csv);
+                link.download = `Report_${this.selectedHotel}.csv`;
+                link.click();
+            }
+
+            exportAllCSVReport() {
+                let csv = "Hotel,Date,Housekeeper,Room Number,Service Type,Duration(Mins)\n";
+                this.roomLogs.forEach(r => {
+                    csv += `"${r.hotel}","${r.date}","${r.housekeeper}","${r.roomNumber}","${r.serviceType}","${Math.round(r.durationSecs/60)}"\n`;
+                });
+                const link = document.createElement("a");
+                link.href = encodeURI("data:text/csv;charset=utf-8," + csv);
+                link.download = `Portfolio_Report.csv`;
+                link.click();
+            }
+
+            clearDailyData() {
+                if (confirm(`Clear logs for ${this.selectedHotel}?`)) {
+                    this.roomLogs = this.roomLogs.filter(r => r.hotel !== this.selectedHotel);
+                    this.saveState();
+                    this.renderAllViews();
+                }
+            }
+
+            openEndOfDayModal() {
+                document.getElementById('modal-eod')?.classList.remove('hidden');
+            }
+            copyEODSummary() {
+                this.showToast("Summary copied!", "success");
+            }
+            submitEODReport() {
+                this.closeModal('modal-eod');
+                this.showToast("Report submitted to manager!", "success");
+            }
+            assignGmMaintenanceTask() {
+                const loc = document.getElementById('gm-maint-location')?.value;
+                const desc = document.getElementById('gm-maint-desc')?.value;
+                if (loc && desc) {
+                    this.createMaintenanceTask(loc, desc, 'General Manager');
+                    document.getElementById('gm-maint-location').value = '';
+                    document.getElementById('gm-maint-desc').value = '';
+                }
+            }
+        }
+
+        window.onload = function() {
+            window.app = new ImbuePropertyTrack();
+        };
+    </script>
+</body>
+</html>
